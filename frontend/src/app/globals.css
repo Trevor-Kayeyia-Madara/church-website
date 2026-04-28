@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+
+    --color-1: #f4c158;
+    --color-2: #421d0d;
+    --color-3: #0d0000;
+    --color-4: #ef9a1d;
+    --color-5: #fffbbd;
+    --color-white: #ffffff;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background text-white antialiased;
+  }
+}
