@@ -1,3 +1,31 @@
+# Environment and secret files
+.env
+backend/.env
+backend/.flaskenv
+.env.example
+
+# Python
+backend/venv
+backend/__pycache__
+backend/app/__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache
+deploy_check.sh
+
+CPANEL_DEPLOY.md
+CPANEL_UPLOAD_CHECKLIST.md
+
+# Node
+node_modules
+dist
+dist-ssr
+frontend/package-lock.json
+*.local
+
 # Logs
 logs
 *.log
@@ -6,24 +34,11 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-.next
-design/reference/
-visily-multiscreens.pdf
-.env.example
-package-lock.json
-backend/.flaskenv
 
-node_modules
-dist
-dist-ssr
-*.local
+# Build outputs
+frontend/dist
 
-.zip
-auth.zip
-
-CPANEL.md
-
-# Editor directories and files
+# Editor directories
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -34,6 +49,14 @@ CPANEL.md
 *.sln
 *.sw?
 
-.env
+# cPanel specific
+*.zip
+auth.zip
+CPANEL.md
 
+# Design files
+design/reference/
+visily-multiscreens.pdf
+
+# Public uploads (runtime)
 public/uploads/
