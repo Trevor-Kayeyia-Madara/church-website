@@ -1,149 +1,82 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import prisma from "@/lib/db";
-import { getAdminSession } from "@/lib/adminAuth.server";
 
-function slugify(value) {
-  return String(value || "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.dcutawala.org";
 
-function sermonSlug({ title, date }) {
-  const d = date instanceof Date ? date : new Date(date);
-  const yyyyMmDd = Number.isFinite(d.getTime()) ? d.toISOString().slice(0, 10) : null;
-  const base = slugify(title) || "sermon";
-  return yyyyMmDd ? `${base}-${yyyyMmDd}` : base;
-}
-
-function isValidUrl(value) {
-  try {
-    // eslint-disable-next-line no-new
-    new URL(value);
-    return true;
-  } catch {
-    return false;
+function getAdminToken(request: Request): string | null {
+  const authHeader = request.headers.get("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.replace("Bearer ", "");
   }
+  const cookieHeader = request.headers.get("Cookie") || "";
+  const match = cookieHeader.match(/admin_token=([^;]+)/);
+  return match ? match[1] : null;
 }
 
-const UrlOrPath = z
-  .string()
-  .max(2048)
-  .optional()
-  .or(z.literal(""))
-  .refine((v) => v === "" || v.startsWith("/") || isValidUrl(v), {
-    message: "Invalid URL",
+async function fetchBackend(path: string, options: RequestInit = {}, request?: Request) {
+  const token = getAdminToken(request!) || (options.headers as any)?.["Authorization"]?.replace("Bearer ", "");
+  
+  const res = await fetch(`${BACKEND_URL}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
   });
+  return res;
+}
 
-const SermonUpdateSchema = z.object({
-  title: z.string().min(2).max(255),
-  description: z.string().max(5000).optional().or(z.literal("")),
-  speaker: z.string().max(255).optional().or(z.literal("")),
-  date: z.string().datetime(),
-  durationMinutes: z.number().int().min(1).max(24 * 60).optional(),
-  thumbnailUrl: UrlOrPath,
-  videoUrl: z.string().url().max(2048).optional().or(z.literal("")),
-  categorySlug: z.string().max(191).optional().or(z.literal("")),
-  categoryName: z.string().max(255).optional().or(z.literal("")),
-  slug: z.string().max(191).optional().or(z.literal("")),
-});
-
-export async function PUT(request, { params }) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const token = getAdminToken(request);
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const awaitedParams = await params;
   const id = String(awaitedParams?.id || "");
+  
   const json = await request.json().catch(() => null);
-  const parsed = SermonUpdateSchema.safeParse(json);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid payload", details: parsed.error.flatten() },
-      { status: 400 },
-    );
-  }
-
-  const data = parsed.data;
-  const date = new Date(data.date);
-  const slug = data.slug ? slugify(data.slug) : sermonSlug({ title: data.title, date });
-
-  let categoryId = null;
-  const categorySlug = data.categorySlug ? slugify(data.categorySlug) : "";
-  const categoryName = String(data.categoryName || "").trim();
-
-  if (categorySlug) {
-    try {
-      const category = await prisma.category.upsert({
-        where: { slug: categorySlug },
-        update: { ...(categoryName ? { name: categoryName } : {}) },
-        create: { slug: categorySlug, name: categoryName || categorySlug },
-      });
-      categoryId = category.id;
-    } catch {
-      categoryId = null;
-    }
-  }
-
-  try {
-    const updated = await prisma.sermon.update({
-      where: { id },
-      data: {
-        slug,
-        title: data.title,
-        description: data.description || null,
-        speaker: data.speaker || null,
-        date,
-        durationMinutes: data.durationMinutes ?? null,
-        thumbnailUrl: data.thumbnailUrl || null,
-        videoUrl: data.videoUrl || null,
-        categoryId,
-      },
-    });
-    return NextResponse.json({ ok: true, item: updated });
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message || "Database error" },
-      { status: 500 },
-    );
-  }
+  
+  const res = await fetchBackend(`/api/admin/sermons/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(json),
+  });
+  
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }
 
-export async function GET(request, { params }) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const token = getAdminToken(request);
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const awaitedParams = await params;
   const id = String(awaitedParams?.id || "");
-  try {
-    const item = await prisma.sermon.findUnique({
-      where: { id },
-      include: { category: true },
-    });
-    if (!item) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json({ ok: true, item });
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message || "Database error" },
-      { status: 500 },
-    );
+  
+  const res = await fetchBackend(`/api/admin/sermons/${id}`, { method: "GET" });
+  const data = await res.json();
+  
+  if (!res.ok) {
+    return NextResponse.json(data, { status: res.status });
   }
+  
+  // Transform to include category object
+  const item = {
+    ...data.item,
+    category: data.item.category ? { id: data.item.category.id, name: data.item.category.name, slug: data.item.category.slug } : null,
+  };
+  
+  return NextResponse.json({ ok: true, item });
 }
 
-export async function DELETE(request, { params }) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const token = getAdminToken(request);
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const awaitedParams = await params;
   const id = String(awaitedParams?.id || "");
-  try {
-    await prisma.sermon.delete({ where: { id } });
-    return NextResponse.json({ ok: true });
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message || "Database error" },
-      { status: 500 },
-    );
-  }
+  
+  const res = await fetchBackend(`/api/admin/sermons/${id}`, { method: "DELETE" });
+  const data = await res.json();
+  
+  return NextResponse.json(data, { status: res.status });
 }

@@ -32,7 +32,10 @@ export default function AdminMessages() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/messages", { cache: "no-store" });
+      const res = await fetch("/api/admin/messages", { 
+        cache: "no-store",
+        credentials: "include",
+      });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Failed to load");
       setItems(Array.isArray(json.items) ? json.items : []);
@@ -56,6 +59,7 @@ export default function AdminMessages() {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(form),
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Create failed");
@@ -83,6 +87,7 @@ export default function AdminMessages() {
           subject: editing.subject || "",
           message: editing.message,
         }),
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Save failed");
@@ -98,7 +103,10 @@ export default function AdminMessages() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/messages/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/messages/${id}`, { 
+        method: "DELETE",
+        credentials: "include",
+      });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Delete failed");
       setEditingId(null);

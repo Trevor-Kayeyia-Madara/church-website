@@ -1,7 +1,31 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/db";
-import { getAdminSession } from "@/lib/adminAuth.server";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.dcutawala.org";
+
+function getAdminToken(request: Request): string | null {
+  const authHeader = request.headers.get("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.replace("Bearer ", "");
+  }
+  const cookieHeader = request.headers.get("Cookie") || "";
+  const match = cookieHeader.match(/admin_token=([^;]+)/);
+  return match ? match[1] : null;
+}
+
+async function fetchBackend(path: string, options: RequestInit = {}, request?: Request) {
+  const token = getAdminToken(request!) || (options.headers as any)?.["Authorization"]?.replace("Bearer ", "");
+  
+  const res = await fetch(`${BACKEND_URL}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  return res;
+}
 
 function slugify(value) {
   return String(value || "")
@@ -13,7 +37,6 @@ function slugify(value) {
 
 function isValidUrl(value) {
   try {
-    // eslint-disable-next-line no-new
     new URL(value);
     return true;
   } catch {
@@ -40,42 +63,14 @@ const MinistrySchema = z.object({
   slug: z.string().max(191).optional().or(z.literal("")),
 });
 
-function normalizeMinistry(m) {
-  return {
-    id: m.id,
-    slug: m.slug,
-    title: m.title,
-    description: m.description || null,
-    highlights: Array.isArray(m.highlights) ? m.highlights : [],
-    imageUrl: m.imageUrl || null,
-    sortOrder: m.sortOrder ?? 0,
-    isPublished: !!m.isPublished,
-    createdAt: m.createdAt?.toISOString?.() || m.createdAt,
-    updatedAt: m.updatedAt?.toISOString?.() || m.updatedAt,
-  };
-}
-
 export async function GET() {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  try {
-    const items = await prisma.ministry.findMany({
-      orderBy: [{ sortOrder: "asc" }, { title: "asc" }],
-    });
-    return NextResponse.json({ ok: true, items: items.map(normalizeMinistry) });
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message || "Database error" },
-      { status: 500 },
-    );
-  }
+  const res = await fetchBackend("/api/admin/ministries");
+  const data = await res.json();
+  if (!res.ok) return NextResponse.json(data, { status: res.status });
+  return NextResponse.json({ ok: true, items: data.items || [] });
 }
 
-export async function POST(request) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+export async function POST(request: Request) {
   const json = await request.json().catch(() => null);
   const parsed = MinistrySchema.safeParse(json);
   if (!parsed.success) {
@@ -85,30 +80,12 @@ export async function POST(request) {
     );
   }
 
-  const data = parsed.data;
-  const slug = data.slug ? slugify(data.slug) : slugify(data.title);
-  if (!slug) {
-    return NextResponse.json({ error: "Invalid slug" }, { status: 400 });
-  }
-
-  try {
-    const created = await prisma.ministry.create({
-      data: {
-        slug,
-        title: data.title,
-        description: data.description || null,
-        highlights: data.highlights || [],
-        imageUrl: data.imageUrl || null,
-        sortOrder: data.sortOrder ?? 0,
-        isPublished: data.isPublished ?? true,
-      },
-    });
-    return NextResponse.json({ ok: true, item: normalizeMinistry(created) });
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message || "Database error" },
-      { status: 500 },
-    );
-  }
+  const res = await fetchBackend("/api/admin/ministries", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(parsed.data),
+  });
+  
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }
-

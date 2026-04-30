@@ -34,6 +34,7 @@ export default function AdminPastors() {
       const res = await fetch("/api/admin/upload/pastor-photo", {
         method: "POST",
         body,
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Upload failed");
@@ -43,11 +44,14 @@ export default function AdminPastors() {
     }
   }
 
-  async function load() {
+   async function load() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/pastors", { cache: "no-store" });
+      const res = await fetch("/api/admin/pastors", { 
+        cache: "no-store",
+        credentials: "include",
+      });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Failed to load");
       setItems(Array.isArray(json.items) ? json.items : []);
@@ -74,6 +78,7 @@ export default function AdminPastors() {
           ...form,
           sortOrder: Number(form.sortOrder) || 0,
         }),
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Create failed");
@@ -109,6 +114,7 @@ export default function AdminPastors() {
           sortOrder: Number(editing.sortOrder) || 0,
           isPublished: !!editing.isPublished,
         }),
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Save failed");
@@ -124,7 +130,10 @@ export default function AdminPastors() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/pastors/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/pastors/${id}`, { 
+        method: "DELETE",
+        credentials: "include",
+      });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Delete failed");
       setEditingId(null);

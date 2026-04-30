@@ -42,7 +42,10 @@ export default function AdminSermons() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/sermons", { cache: "no-store" });
+      const res = await fetch("/api/admin/sermons", { 
+        cache: "no-store",
+        credentials: "include", // Send cookies (admin_token)
+      });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Failed to load");
       setItems(Array.isArray(json.items) ? json.items : []);
@@ -68,6 +71,7 @@ export default function AdminSermons() {
       const res = await fetch("/api/admin/upload/sermon-thumb", {
         method: "POST",
         body,
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Upload failed");
@@ -98,6 +102,7 @@ export default function AdminSermons() {
           description: form.description,
           slug: form.slug,
         }),
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Create failed");
@@ -142,6 +147,7 @@ export default function AdminSermons() {
           description: editing.description || "",
           slug: editing.slug || "",
         }),
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Save failed");
@@ -157,7 +163,10 @@ export default function AdminSermons() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/sermons/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/sermons/${id}`, { 
+        method: "DELETE",
+        credentials: "include",
+      });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Delete failed");
       setEditingId(null);

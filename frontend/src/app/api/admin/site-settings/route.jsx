@@ -1,27 +1,46 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/db";
-import { getAdminSession } from "@/lib/adminAuth.server";
 import { SITE as DEFAULT_SITE } from "@/lib/siteConfig";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.dcutawala.org";
+
+function getAdminToken(request: Request): string | null {
+  const authHeader = request.headers.get("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.replace("Bearer ", "");
+  }
+  const cookieHeader = request.headers.get("Cookie") || "";
+  const match = cookieHeader.match(/admin_token=([^;]+)/);
+  return match ? match[1] : null;
+}
+
+async function fetchBackend(path: string, options: RequestInit = {}, request?: Request) {
+  const token = getAdminToken(request!) || (options.headers as any)?.["Authorization"]?.replace("Bearer ", "");
+  
+  const res = await fetch(`${BACKEND_URL}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  return res;
+}
+
+// Schemas for frontend validation (optional - backend also validates)
+const RelativeOrUrlSchema = z
+  .string()
+  .max(500)
+  .refine((v) => v === "" || v.startsWith("/") || (() => {
+    try { new URL(v); return true; } catch { return false; }
+  })(), { message: "Must be a relative path or URL" });
 
 const ServiceTimeSchema = z.object({
   day: z.string().min(1).max(40),
   time: z.string().min(1).max(80),
   label: z.string().min(1).max(80),
 });
-
-const RelativeOrUrlSchema = z
-  .string()
-  .max(500)
-  .refine((v) => v === "" || v.startsWith("/") || (() => {
-    try {
-      // eslint-disable-next-line no-new
-      new URL(v);
-      return true;
-    } catch {
-      return false;
-    }
-  })(), { message: "Must be a relative path or URL" });
 
 const SchoolProgramSchema = z.object({
   key: z.string().max(80).optional().or(z.literal("")),
@@ -36,16 +55,14 @@ const SchoolSchema = z.object({
   heroTitle: z.string().min(2).max(160),
   heroSubtitle: z.string().min(2).max(600),
   programs: z.array(SchoolProgramSchema).min(1).max(12),
-  cta: z
-    .object({
-      title: z.string().min(2).max(160),
-      body: z.string().min(2).max(600),
-      primaryLabel: z.string().min(2).max(60),
-      primaryHref: RelativeOrUrlSchema,
-      secondaryLabel: z.string().min(2).max(60),
-      secondaryHref: RelativeOrUrlSchema,
-    })
-    .optional(),
+  cta: z.object({
+    title: z.string().min(2).max(160),
+    body: z.string().min(2).max(600),
+    primaryLabel: z.string().min(2).max(60),
+    primaryHref: RelativeOrUrlSchema,
+    secondaryLabel: z.string().min(2).max(60),
+    secondaryHref: RelativeOrUrlSchema,
+  }).optional(),
 });
 
 const GivingTypeSchema = z.object({
@@ -140,23 +157,17 @@ function normalizeRow(row) {
 }
 
 export async function GET() {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  try {
-    const row = await prisma.siteSettings.findFirst({ orderBy: { id: "asc" } });
-    return NextResponse.json({ ok: true, settings: normalizeRow(row) });
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message || "Database error" },
-      { status: 500 },
-    );
-  }
+  const res = await fetchBackend("/api/admin/settings");
+  const data = await res.json();
+  if (!res.ok) return NextResponse.json(data, { status: res.status });
+  
+  const settings = data.settings ? normalizeRow(data.settings) : normalizeRow(null);
+  return NextResponse.json({ ok: true, settings });
 }
 
-export async function PUT(request) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function PUT(request: Request) {
+  const token = getAdminToken(request);
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const json = await request.json().catch(() => null);
   const parsed = SettingsSchema.safeParse(json);
@@ -169,62 +180,19 @@ export async function PUT(request) {
 
   const data = parsed.data;
 
-  try {
-    const existing = await prisma.siteSettings.findFirst({ orderBy: { id: "asc" } });
-    const saved = existing
-      ? await prisma.siteSettings.update({
-          where: { id: existing.id },
-          data: {
-            siteName: data.siteName,
-            shortName: data.shortName,
-            tagline: data.tagline,
-            location: data.location,
-            logoUrl: data.logoUrl || null,
-            addressLine1: data.addressLine1 || null,
-            addressLine2: data.addressLine2 || null,
-            phoneDisplay: data.phoneDisplay || null,
-            phoneTel: data.phoneTel || null,
-            email: data.email || null,
-            youtubeUrl: data.youtubeUrl || null,
-            facebookUrl: data.facebookUrl || null,
-            instagramUrl: data.instagramUrl || null,
-            tiktokUrl: data.tiktokUrl || null,
-            linktreeUrl: data.linktreeUrl || null,
-            liveEmbedUrl: data.liveEmbedUrl || null,
-            serviceTimes: data.serviceTimes || null,
-            school: data.school || null,
-            giving: data.giving || null,
-          },
-        })
-      : await prisma.siteSettings.create({
-          data: {
-            siteName: data.siteName,
-            shortName: data.shortName,
-            tagline: data.tagline,
-            location: data.location,
-            logoUrl: data.logoUrl || null,
-            addressLine1: data.addressLine1 || null,
-            addressLine2: data.addressLine2 || null,
-            phoneDisplay: data.phoneDisplay || null,
-            phoneTel: data.phoneTel || null,
-            email: data.email || null,
-            youtubeUrl: data.youtubeUrl || null,
-            facebookUrl: data.facebookUrl || null,
-            instagramUrl: data.instagramUrl || null,
-            tiktokUrl: data.tiktokUrl || null,
-            linktreeUrl: data.linktreeUrl || null,
-            liveEmbedUrl: data.liveEmbedUrl || null,
-            serviceTimes: data.serviceTimes || null,
-            school: data.school || null,
-            giving: data.giving || null,
-          },
-        });
-
-    return NextResponse.json({ ok: true, settings: normalizeRow(saved) });
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message || "Database error" },
-      { status: 500 },
-    );
+  const res = await fetchBackend("/api/admin/settings", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  
+  const responseData = await res.json();
+  
+  if (res.ok) {
+    // Normalize returned settings
+    const settings = responseData.settings ? normalizeRow(responseData.settings) : normalizeRow(null);
+    return NextResponse.json({ ok: true, settings });
   }
+  
+  return NextResponse.json(responseData, { status: res.status });
 }

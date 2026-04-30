@@ -1,7 +1,30 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import prisma from "@/lib/db";
-import { getAdminSession } from "@/lib/adminAuth.server";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.dcutawala.org";
+
+function getAdminToken(request: Request): string | null {
+  const authHeader = request.headers.get("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.replace("Bearer ", "");
+  }
+  const cookieHeader = request.headers.get("Cookie") || "";
+  const match = cookieHeader.match(/admin_token=([^;]+)/);
+  return match ? match[1] : null;
+}
+
+async function fetchBackend(path: string, options: RequestInit = {}, request?: Request) {
+  const token = getAdminToken(request!) || (options.headers as any)?.["Authorization"]?.replace("Bearer ", "");
+  
+  const res = await fetch(`${BACKEND_URL}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  return res;
+}
 
 function slugify(value) {
   return String(value || "")
@@ -13,7 +36,6 @@ function slugify(value) {
 
 function isValidUrl(value) {
   try {
-    // eslint-disable-next-line no-new
     new URL(value);
     return true;
   } catch {
@@ -40,26 +62,13 @@ const PastorSchema = z.object({
 });
 
 export async function GET() {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  try {
-    const items = await prisma.pastor.findMany({
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    });
-    return NextResponse.json({ ok: true, items });
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message || "Database error" },
-      { status: 500 },
-    );
-  }
+  const res = await fetchBackend("/api/admin/pastors");
+  const data = await res.json();
+  if (!res.ok) return NextResponse.json(data, { status: res.status });
+  return NextResponse.json({ ok: true, items: data.items || [] });
 }
 
-export async function POST(request) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+export async function POST(request: Request) {
   const json = await request.json().catch(() => null);
   const parsed = PastorSchema.safeParse(json);
   if (!parsed.success) {
@@ -69,26 +78,12 @@ export async function POST(request) {
     );
   }
 
-  const data = parsed.data;
-  const slug = slugify(data.name) || `pastor-${Date.now()}`;
-
-  try {
-    const created = await prisma.pastor.create({
-      data: {
-        slug,
-        name: data.name,
-        roleTitle: data.roleTitle || null,
-        bio: data.bio || null,
-        photoUrl: data.photoUrl || null,
-        sortOrder: data.sortOrder ?? 0,
-        isPublished: data.isPublished ?? true,
-      },
-    });
-    return NextResponse.json({ ok: true, item: created });
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message || "Database error" },
-      { status: 500 },
-    );
-  }
+  const res = await fetchBackend("/api/admin/pastors", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(parsed.data),
+  });
+  
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }

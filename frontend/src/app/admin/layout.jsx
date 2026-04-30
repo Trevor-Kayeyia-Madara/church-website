@@ -1,21 +1,46 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { AUTH_CONFIGURED, auth } from "@/auth";
+import { headers } from "next/headers";
 import SectionWrapper from "@/components/SectionWrapper";
 import AdminShell from "@/components/admin/AdminShell";
 
 export const dynamic = "force-dynamic";
 
-function parseAllowedEmails() {
-  const raw = process.env.AUTH_ALLOWED_EMAILS || "";
-  return raw
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
+async function getSession() {
+  const headersList = await headers();
+  const cookieHeader = headersList.get("cookie") || "";
+  const tokenMatch = cookieHeader.match(/admin_token=([^;]+)/);
+  
+  if (!tokenMatch) return null;
+  
+  const token = tokenMatch[1];
+  const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+  
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/auth/me`, {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+      // Don't cache
+      cache: "no-store",
+    });
+    
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.authenticated ? { email: "admin@dcutawala.org" } : null;
+  } catch {
+    return null;
+  }
 }
 
-export default async function AdminLayout({ children }) {
-  if (!AUTH_CONFIGURED) {
+export default async function AdminLayout({ 
+  children 
+}: { 
+  children: React.ReactNode;
+}) {
+  const session = await getSession();
+  
+  if (!session) {
     return (
       <SectionWrapper className="py-14 sm:py-20">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-7 sm:p-10">
@@ -23,36 +48,17 @@ export default async function AdminLayout({ children }) {
             Admin
           </p>
           <h1 className="mt-3 text-3xl sm:text-4xl font-black leading-tight">
-            Google OAuth not configured
+            Authentication Required
           </h1>
           <p className="mt-4 text-white/80 max-w-3xl">
-            Set <span className="font-extrabold">GOOGLE_CLIENT_ID</span> and{" "}
-            <span className="font-extrabold">GOOGLE_CLIENT_SECRET</span> in your{" "}
-            <span className="font-extrabold">.env</span>, then restart{" "}
-            <span className="font-extrabold">npm run dev</span>.
+            You need to sign in to access the admin dashboard.
           </p>
-          <div className="mt-6 rounded-2xl border border-white/10 bg-background/40 p-5 text-sm text-white/80">
-            <p className="font-extrabold">Google Console</p>
-            <ul className="mt-2 list-disc pl-5 space-y-1 text-white/70">
-              <li>
-                Add Authorized redirect URI:{" "}
-                <span className="font-mono">
-                  http://localhost:3000/api/auth/callback/google
-                </span>
-              </li>
-              <li>
-                Add your email(s) to{" "}
-                <span className="font-extrabold">AUTH_ALLOWED_EMAILS</span> to
-                restrict access.
-              </li>
-            </ul>
-          </div>
           <div className="mt-6">
             <Link
-              href="/"
+              href="/admin/login"
               className="inline-flex items-center justify-center rounded-xl bg-primary text-black font-extrabold px-7 py-3.5 hover:bg-accent transition-colors"
             >
-              Go Home
+              Sign In
             </Link>
           </div>
         </div>
@@ -60,16 +66,45 @@ export default async function AdminLayout({ children }) {
     );
   }
 
-  const session = await auth();
-  if (!session?.user) {
-    redirect("/api/auth/signin?callbackUrl=/admin");
+  return <AdminShell email={session.email}>{children}</AdminShell>;
+}
+}
+
+// Helper to get cookies from request headers
+async function getSessionFromRequest(headers: Headers) {
+  const cookieHeader = headers.get("cookie") || "";
+  const tokenMatch = cookieHeader.match(/admin_token=([^;]+)/);
+  
+  if (!tokenMatch) return null;
+  
+  const token = tokenMatch[1];
+  const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
+  
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/auth/me`, {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+    
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.authenticated ? { email: "admin@dcutawala.org" } : null;
+  } catch {
+    return null;
   }
+}
 
-  const allowed = parseAllowedEmails();
-  const email = String(session.user.email || "").toLowerCase();
-  const isAllowed = !allowed.length || allowed.includes(email);
-
-  if (!isAllowed) {
+export default async function AdminLayout({ 
+  children, 
+  request 
+}: { 
+  children: React.ReactNode;
+  request: Request;
+}) {
+  const session = await getSessionFromRequest(request.headers);
+  
+  if (!session) {
     return (
       <SectionWrapper className="py-14 sm:py-20">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-7 sm:p-10">
@@ -77,26 +112,17 @@ export default async function AdminLayout({ children }) {
             Admin
           </p>
           <h1 className="mt-3 text-3xl sm:text-4xl font-black leading-tight">
-            Access denied
+            Authentication Required
           </h1>
           <p className="mt-4 text-white/80 max-w-3xl">
-            Signed in as <span className="font-extrabold">{email}</span>, but
-            this email is not allowed. Update{" "}
-            <span className="font-extrabold">AUTH_ALLOWED_EMAILS</span> in your
-            environment variables.
+            You need to sign in to access the admin dashboard.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6">
             <Link
-              className="inline-flex items-center justify-center rounded-xl bg-white/5 border border-white/10 px-6 py-3 font-bold hover:bg-white/10 transition-colors"
-              href="/api/auth/signout?callbackUrl=/"
-            >
-              Sign Out
-            </Link>
-            <Link
-              href="/"
+              href="/admin/login"
               className="inline-flex items-center justify-center rounded-xl bg-primary text-black font-extrabold px-7 py-3.5 hover:bg-accent transition-colors"
             >
-              Go Home
+              Sign In
             </Link>
           </div>
         </div>
@@ -104,5 +130,5 @@ export default async function AdminLayout({ children }) {
     );
   }
 
-  return <AdminShell email={session.user.email}>{children}</AdminShell>;
+  return <AdminShell email={session.email}>{children}</AdminShell>;
 }

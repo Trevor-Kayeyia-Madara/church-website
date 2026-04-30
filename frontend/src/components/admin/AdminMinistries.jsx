@@ -36,7 +36,10 @@ export default function AdminMinistries() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/ministries", { cache: "no-store" });
+      const res = await fetch("/api/admin/ministries", { 
+        cache: "no-store",
+        credentials: "include",
+      });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Failed to load");
       setItems(Array.isArray(json.items) ? json.items : []);
@@ -68,6 +71,7 @@ export default function AdminMinistries() {
           isPublished: !!form.isPublished,
           slug: form.slug,
         }),
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Create failed");
@@ -105,6 +109,7 @@ export default function AdminMinistries() {
           isPublished: !!editing.isPublished,
           slug: editing.slug || "",
         }),
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Save failed");
@@ -120,7 +125,10 @@ export default function AdminMinistries() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/ministries/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/ministries/${id}`, { 
+        method: "DELETE",
+        credentials: "include",
+      });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Delete failed");
       setEditingId(null);

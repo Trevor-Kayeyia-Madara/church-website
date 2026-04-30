@@ -25,7 +25,7 @@ export default function AdminSettings() {
     setError("");
     setMessage("");
     try {
-      const res = await fetch("/api/admin/site-settings", { cache: "no-store" });
+       const res = await fetch("/api/admin/site-settings", { cache: "no-store", credentials: "include" });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Failed to load");
       setSettings(json.settings);
@@ -47,10 +47,11 @@ export default function AdminSettings() {
     setError("");
     setMessage("");
     try {
-      const res = await fetch("/api/admin/site-settings", {
+       const res = await fetch("/api/admin/site-settings", {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(settings),
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Save failed");

@@ -49,7 +49,10 @@ export default function AdminGallery() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/gallery", { cache: "no-store" });
+      const res = await fetch("/api/admin/gallery", { 
+        cache: "no-store",
+        credentials: "include",
+      });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Failed to load");
       setItems(Array.isArray(json.items) ? json.items : []);
@@ -76,6 +79,7 @@ export default function AdminGallery() {
           ...form,
           sortOrder: Number(form.sortOrder) || 0,
         }),
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Create failed");
@@ -113,6 +117,7 @@ export default function AdminGallery() {
           sortOrder: Number(editing.sortOrder) || 0,
           isPublished: !!editing.isPublished,
         }),
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Save failed");

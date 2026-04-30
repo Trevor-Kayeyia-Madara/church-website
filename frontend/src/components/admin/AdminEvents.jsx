@@ -44,6 +44,7 @@ export default function AdminEvents() {
       const res = await fetch("/api/admin/upload/event-poster", {
         method: "POST",
         body,
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Upload failed");
@@ -53,11 +54,14 @@ export default function AdminEvents() {
     }
   }
 
-  async function load() {
+   async function load() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/events", { cache: "no-store" });
+      const res = await fetch("/api/admin/events", { 
+        cache: "no-store",
+        credentials: "include",
+      });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Failed to load");
       setItems(Array.isArray(json.items) ? json.items : []);
@@ -85,6 +89,7 @@ export default function AdminEvents() {
           startAt: new Date(form.startAt).toISOString(),
           endAt: form.endAt ? new Date(form.endAt).toISOString() : "",
         }),
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Create failed");
@@ -122,6 +127,7 @@ export default function AdminEvents() {
           description: editing.description || "",
           isPublished: !!editing.isPublished,
         }),
+        credentials: "include",
       });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Save failed");
@@ -137,7 +143,10 @@ export default function AdminEvents() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/events/${id}`, { 
+        method: "DELETE",
+        credentials: "include",
+      });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Delete failed");
       setEditingId(null);
