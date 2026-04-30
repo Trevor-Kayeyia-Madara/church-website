@@ -1,7 +1,33 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "@/lib/db";
-import { getAdminSession } from "@/lib/adminAuth.server";
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.dcutawala.org";
+
+function getAdminToken(request: Request): string | null {
+  // Try Authorization header first
+  const authHeader = request.headers.get("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.replace("Bearer ", "");
+  }
+  // Fallback to cookie
+  const cookieHeader = request.headers.get("Cookie") || "";
+  const match = cookieHeader.match(/admin_token=([^;]+)/);
+  return match ? match[1] : null;
+}
+
+async function fetchBackend(path: string, options: RequestInit = {}) {
+  const token = getAdminToken(options.request as Request) || options.headers?.["Authorization"]?.replace("Bearer ", "");
+  
+  const res = await fetch(`${BACKEND_URL}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  return res;
+}
 
 function slugify(value) {
   return String(value || "")
@@ -20,7 +46,6 @@ function sermonSlug({ title, date }) {
 
 function isValidUrl(value) {
   try {
-    // eslint-disable-next-line no-new
     new URL(value);
     return true;
   } catch {
@@ -50,31 +75,28 @@ const SermonSchema = z.object({
   slug: z.string().max(191).optional().or(z.literal("")),
 });
 
-export async function GET() {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const query = url.searchParams.toString();
+  const path = `/api/admin/sermons${query ? `?${query}` : ""}`;
 
-  try {
-    const [items, categories] = await Promise.all([
-      prisma.sermon.findMany({
-        orderBy: { date: "desc" },
-        include: { category: true },
-      }),
-      prisma.category.findMany({ orderBy: { name: "asc" } }),
-    ]);
-    return NextResponse.json({ ok: true, items, categories });
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message || "Database error" },
-      { status: 500 },
-    );
+  const res = await fetchBackend(path, { request, method: "GET" });
+  const data = await res.json();
+  
+  if (!res.ok) {
+    return NextResponse.json(data, { status: res.status });
   }
+  
+  // Transform backend response to match frontend expectations
+  const items = (data.items || []).map((s: any) => ({
+    ...s,
+    category: s.category ? { id: s.category.id, name: s.category.name, slug: s.category.slug } : null,
+  }));
+  
+  return NextResponse.json({ ok: true, items, categories: data.categories || [] });
 }
 
-export async function POST(request) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+export async function POST(request: Request) {
   const json = await request.json().catch(() => null);
   const parsed = SermonSchema.safeParse(json);
   if (!parsed.success) {
@@ -84,46 +106,16 @@ export async function POST(request) {
     );
   }
 
-  const data = parsed.data;
-  const date = new Date(data.date);
-  const slug = data.slug ? slugify(data.slug) : sermonSlug({ title: data.title, date });
-
-  let categoryId = null;
-  const categorySlug = data.categorySlug ? slugify(data.categorySlug) : "";
-  const categoryName = String(data.categoryName || "").trim();
-
-  if (categorySlug) {
-    try {
-      const category = await prisma.category.upsert({
-        where: { slug: categorySlug },
-        update: { ...(categoryName ? { name: categoryName } : {}) },
-        create: { slug: categorySlug, name: categoryName || categorySlug },
-      });
-      categoryId = category.id;
-    } catch {
-      categoryId = null;
-    }
+  const res = await fetchBackend("/api/admin/sermons", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(parsed.data),
+  });
+  
+  const data = await res.json();
+  if (!res.ok) {
+    return NextResponse.json(data, { status: res.status });
   }
-
-  try {
-    const created = await prisma.sermon.create({
-      data: {
-        slug,
-        title: data.title,
-        description: data.description || null,
-        speaker: data.speaker || null,
-        date,
-        durationMinutes: data.durationMinutes ?? null,
-        thumbnailUrl: data.thumbnailUrl || null,
-        videoUrl: data.videoUrl || null,
-        categoryId,
-      },
-    });
-    return NextResponse.json({ ok: true, item: created });
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e?.message || "Database error" },
-      { status: 500 },
-    );
-  }
+  
+  return NextResponse.json(data);
 }

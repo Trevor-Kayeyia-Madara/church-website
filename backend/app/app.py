@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -8,13 +9,15 @@ from uuid import uuid4
 from flask import Flask, abort, jsonify, request
 from flask import send_from_directory
 from flask_cors import CORS
-from sqlalchemy import asc, desc, select
+from sqlalchemy import asc, desc, select, func
 
 from app.config import settings
 from app.db import SessionLocal, engine
 from app.defaults import DEFAULT_SITE, MOCK_CATEGORIES, MOCK_SERMONS
-from app.models import Category, Event, Message, Ministry, Pastor, Sermon, SiteSettings
+from app.models import Category, Event, Message, Ministry, Pastor, Sermon, SiteSettings, GalleryItem
 from app.youtube import YouTubeVideo, get_youtube_videos, has_youtube_source
+from app.admin_routes import register_admin_routes
+from app.admin_auth import init_admin_db
 
 
 def create_app() -> Flask:
@@ -477,6 +480,16 @@ def create_app() -> Flask:
                 except Exception:
                     pass
                 return jsonify({"ok": True, "mocked": True})
+
+    # Register admin routes
+    register_admin_routes(app)
+
+    # Initialize admin database tables
+    if engine is not None:
+        try:
+            init_admin_db(engine)
+        except Exception:
+            pass  # Tables may already exist
 
     return app
 

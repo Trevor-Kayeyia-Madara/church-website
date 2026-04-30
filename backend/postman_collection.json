@@ -1,0 +1,759 @@
+{
+  "info": {
+    "name": "Deliverance Church Utawala - Backend API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Public Endpoints",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": [],
+          "description": "Check if API is alive"
+        },
+        {
+          "name": "Get Site Settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/site",
+              "host": ["{{base_url}}"],
+              "path": ["api", "site"]
+            }
+          },
+          "response": [],
+          "description": "Get church site configuration"
+        },
+        {
+          "name": "List Sermons",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sermons?limit=9&page=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sermons"],
+              "query": [
+                {"key":"limit","value":"9"},
+                {"key":"page","value":"1"}
+              ]
+            }
+          },
+          "response": [],
+          "description": "Public sermons list"
+        },
+        {
+          "name": "List Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/events?limit=3&upcoming=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "events"],
+              "query": [
+                {"key":"limit","value":"3"},
+                {"key":"upcoming","value":"true"}
+              ]
+            }
+          },
+          "response": [],
+          "description": "Upcoming events"
+        },
+        {
+          "name": "List Pastors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pastors?limit=8",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pastors"],
+              "query": [
+                {"key":"limit","value":"8"}
+              ]
+            }
+          },
+          "response": [],
+          "description": "Leadership team"
+        },
+        {
+          "name": "List Ministries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ministries",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ministries"]
+            }
+          },
+          "response": [],
+          "description": "Ministries list"
+        },
+        {
+          "name": "Submit Contact Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"+254700000000\",\n  \"subject\": \"General Inquiry\",\n  \"message\": \"I would like to know more about Sunday service times.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/contact",
+              "host": ["{{base_url}}"],
+              "path": ["api", "contact"]
+            }
+          },
+          "response": [],
+          "description": "Contact form submission"
+        }
+      ]
+    },
+    {
+      "name": "Admin Authentication",
+      "item": [
+        {
+          "name": "Login (Get Token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"YOUR_PASSWORD_HERE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "auth", "login"]
+            }
+          },
+          "response": [],
+          "description": "POST /api/admin/auth/login - Returns bearer token\n\nReplace YOUR_PASSWORD_HERE with actual admin password\n\nExpected response:\n{\n  \"ok\": true,\n  \"token\": \"eyJhbGciOiJIUzI1NiIs...\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"admin\",\n    \"email\": \"admin@dcutawala.org\"\n  }\n}"
+        },
+        {
+          "name": "Verify Session (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "auth", "me"]
+            }
+          },
+          "response": [],
+          "description": "GET /api/admin/auth/me - Verify token works\n\nRequires: Authorization: Bearer <token>\n\nExpected: {\"ok\": true, \"authenticated\": true}"
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"},
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "auth", "logout"]
+            }
+          },
+          "response": [],
+          "description": "POST /api/admin/auth/logout - Revoke token\n\nRequires: Authorization: Bearer <token>"
+        }
+      ]
+    },
+    {
+      "name": "Admin - Sermons (CRUD)",
+      "item": [
+        {
+          "name": "List Sermons (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/sermons?page=1&limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "sermons"],
+              "query": [
+                {"key":"page","value":"1"},
+                {"key":"limit","value":"50"}
+              ]
+            }
+          },
+          "response": [],
+          "description": "GET /api/admin/sermons - List all sermons (admin only)\n\nResponse includes categories array\n\nSample item:\n{\n  \"id\": \"uuid\",\n  \"slug\": \"sermon-title-2025-01-15\",\n  \"title\": \"Sermon Title\",\n  \"speaker\": \"Pastor John\",\n  \"date\": \"2025-01-15T10:00:00Z\",\n  \"durationMinutes\": 45,\n  \"thumbnailUrl\": \"https://...\",\n  \"videoUrl\": \"https://youtube.com/...\",\n  \"categoryId\": \"uuid\",\n  \"category\": {\"id\":\"...\",\"name\":\"Sermons\",\"slug\":\"sermons\"}\n}"
+        },
+        {
+          "name": "Create Sermon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"},
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"The Grace of God\",\n  \"description\": \"A powerful message about God's grace and mercy.\",\n  \"speaker\": \"Pastor John Doe\",\n  \"date\": \"2025-05-04T10:00:00\",\n  \"durationMinutes\": 45,\n  \"thumbnailUrl\": \"https://example.com/thumb.jpg\",\n  \"videoUrl\": \"https://www.youtube.com/watch?v=VIDEO_ID\",\n  \"categorySlug\": \"sermons\",\n  \"categoryName\": \"Sermons\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/sermons",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "sermons"]
+            }
+          },
+          "response": [],
+          "description": "POST /api/admin/sermons - Create new sermon\n\nFields: title (required), date (ISO datetime), speaker, description, durationMinutes, thumbnailUrl, videoUrl, categorySlug, categoryName, slug\n\nCategory will be auto-created if slug doesn't exist.\n\nExpected: {\"ok\":true, \"item\":{\"id\":\"...\",\"slug\":\"...\",\"title\":\"...\"}}"
+        },
+        {
+          "name": "Get Single Sermon",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/sermons/{{sermon_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "sermons", "{{sermon_id}}"]
+            }
+          },
+          "response": [],
+          "description": "GET /api/admin/sermons/:id - Get sermon details\n\nReplace {{sermon_id}} with actual sermon ID or slug"
+        },
+        {
+          "name": "Update Sermon",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"},
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Sermon Title\",\n  \"speaker\": \"Pastor Jane Doe\",\n  \"description\": \"Updated description...\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/sermons/{{sermon_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "sermons", "{{sermon_id}}"]
+            }
+          },
+          "response": [],
+          "description": "PUT /api/admin/sermons/:id - Update sermon\n\nSend only fields to update"
+        },
+        {
+          "name": "Delete Sermon",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/sermons/{{sermon_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "sermons", "{{sermon_id}}"]
+            }
+          },
+          "response": [],
+          "description": "DELETE /api/admin/sermons/:id - Delete sermon"
+        }
+      ]
+    },
+    {
+      "name": "Admin - Events (CRUD)",
+      "item": [
+        {
+          "name": "List Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/events?page=1&limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "events"],
+              "query": [
+                {"key":"page","value":"1"},
+                {"key":"limit","value":"50"}
+              ]
+            }
+          },
+          "response": [],
+          "description": "GET /api/admin/events - List all events"
+        },
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"},
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Sunday Service\",\n  \"description\": \"Join us for worship and fellowship\",\n  \"location\": \"Main Sanctuary\",\n  \"posterUrl\": \"https://example.com/poster.jpg\",\n  \"startAt\": \"2025-05-04T10:00:00\",\n  \"endAt\": \"2025-05-04T13:00:00\",\n  \"isPublished\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/events",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "events"]
+            }
+          },
+          "response": [],
+          "description": "POST /api/admin/events - Create event"
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"},
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Easter Sunday Service\",\n  \"isPublished\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/events/{{event_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "events", "{{event_id}}"]
+            }
+          },
+          "response": [],
+          "description": "PUT /api/admin/events/:id - Update event"
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/events/{{event_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "events", "{{event_id}}"]
+            }
+          },
+          "response": [],
+          "description": "DELETE /api/admin/events/:id"
+        }
+      ]
+    },
+    {
+      "name": "Admin - Pastors (CRUD)",
+      "item": [
+        {
+          "name": "List Pastors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/pastors",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "pastors"]
+            }
+          },
+          "response": [],
+          "description": "GET /api/admin/pastors"
+        },
+        {
+          "name": "Create Pastor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"},
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pastor John Doe\",\n  \"roleTitle\": \"Senior Pastor\",\n  \"bio\": \"Biography text here...\",\n  \"photoUrl\": \"https://example.com/pastor.jpg\",\n  \"sortOrder\": 1,\n  \"isPublished\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/pastors",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "pastors"]
+            }
+          },
+          "response": [],
+          "description": "POST /api/admin/pastors"
+        },
+        {
+          "name": "Update Pastor",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"},
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pastor Jane Doe\",\n  \"roleTitle\": \"Associate Pastor\",\n  \"sortOrder\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/pastors/{{pastor_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "pastors", "{{pastor_id}}"]
+            }
+          },
+          "response": [],
+          "description": "PUT /api/admin/pastors/:id"
+        },
+        {
+          "name": "Delete Pastor",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/pastors/{{pastor_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "pastors", "{{pastor_id}}"]
+            }
+          },
+          "response": [],
+          "description": "DELETE /api/admin/pastors/:id"
+        }
+      ]
+    },
+    {
+      "name": "Admin - Ministries (CRUD)",
+      "item": [
+        {
+          "name": "List Ministries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/ministries",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "ministries"]
+            }
+          },
+          "response": [],
+          "description": "GET /api/admin/ministries"
+        },
+        {
+          "name": "Create Ministry",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"},
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Youth Ministry\",\n  \"description\": \"Empowering young people...\",\n  \"highlights\": [\"Weekly meetings\", \"Bible studies\", \"Community outreach\"],\n  \"imageUrl\": \"https://example.com/ministry.jpg\",\n  \"sortOrder\": 1,\n  \"isPublished\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/ministries",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "ministries"]
+            }
+          },
+          "response": [],
+          "description": "POST /api/admin/ministries"
+        },
+        {
+          "name": "Update Ministry",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"},
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Ministry Name\",\n  \"description\": \"Updated description...\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/ministries/{{ministry_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "ministries", "{{ministry_id}}"]
+            }
+          },
+          "response": [],
+          "description": "PUT /api/admin/ministries/:id"
+        },
+        {
+          "name": "Delete Ministry",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/ministries/{{ministry_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "ministries", "{{ministry_id}}"]
+            }
+          },
+          "response": [],
+          "description": "DELETE /api/admin/ministries/:id"
+        }
+      ]
+    },
+    {
+      "name": "Admin - Messages (Contact Submissions)",
+      "item": [
+        {
+          "name": "List Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/messages?page=1&limit=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "messages"],
+              "query": [
+                {"key":"page","value":"1"},
+                {"key":"limit","value":"50"}
+              ]
+            }
+          },
+          "response": [],
+          "description": "GET /api/admin/messages - List contact form submissions\n\nResponse items include truncated message (first 200 chars) and fullMessage field"
+        }
+      ]
+    },
+    {
+      "name": "Admin - Settings (Site Configuration)",
+      "item": [
+        {
+          "name": "Get Settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/settings",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "settings"]
+            }
+          },
+          "response": [],
+          "description": "GET /api/admin/settings - Get current site settings\n\nReturns all configurable fields including siteName, tagline, contact info, social links, live embed, etc."
+        },
+        {
+          "name": "Update Settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"},
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"siteName\": \"Deliverance Church Utawala\",\n  \"shortName\": \"DCU\",\n  \"tagline\": \"The Church Of Choice\",\n  \"location\": \"Utawala, Nairobi\",\n  \"logoUrl\": \"https://dcutawala.org/logo.png\",\n  \"contact\": {\n    \"addressLine1\": \"123 Church Road\",\n    \"addressLine2\": \"Utawala\",\n    \"phoneDisplay\": \"+254 700 000 000\",\n    \"phoneTel\": \"+254700000000\",\n    \"email\": \"info@dcutawala.org\"\n  },\n  \"social\": {\n    \"youtube\": \"https://youtube.com/@deliverancechurchutawala\",\n    \"facebook\": \"https://facebook.com/dcutawala\",\n    \"instagram\": \"https://instagram.com/dcutawala\",\n    \"tiktok\": \"https://tiktok.com/@dcutawala\",\n    \"linktree\": \"https://linktr.ee/dcutawala\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/settings",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "settings"]
+            }
+          },
+          "response": [],
+          "description": "PUT /api/admin/settings - Update site settings\n\nSend only fields you want to update. Nested objects (contact, social) merge with existing."
+        }
+      ]
+    },
+    {
+      "name": "Admin - Gallery (CRUD)",
+      "item": [
+        {
+          "name": "List Gallery",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/gallery",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "gallery"]
+            }
+          },
+          "response": [],
+          "description": "GET /api/admin/gallery - List gallery items"
+        },
+        {
+          "name": "Create Gallery Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"},
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imageUrl\": \"https://example.com/photo.jpg\",\n  \"caption\": \"Church celebration\",\n  \"sortOrder\": 1,\n  \"isPublished\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/gallery",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "gallery"]
+            }
+          },
+          "response": [],
+          "description": "POST /api/admin/gallery - Add gallery photo"
+        },
+        {
+          "name": "Update Gallery Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"},
+              {"key":"Content-Type","value":"application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"caption\": \"Updated caption\",\n  \"sortOrder\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/gallery/{{item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "gallery", "{{item_id}}"]
+            }
+          },
+          "response": [],
+          "description": "PUT /api/admin/gallery/:id - Update gallery item"
+        },
+        {
+          "name": "Delete Gallery Item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key":"Authorization","value":"Bearer {{admin_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/gallery/{{item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "gallery", "{{item_id}}"]
+            }
+          },
+          "response": [],
+          "description": "DELETE /api/admin/gallery/:id"
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://api.dcutawala.org",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string",
+      "description": "Get token from POST /api/admin/auth/login"
+    }
+  ]
+}

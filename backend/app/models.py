@@ -134,3 +134,15 @@ class Donation(Base):
     method: Mapped[str | None] = mapped_column(String(50), nullable=True)
     createdAt: Mapped[str] = mapped_column(DateTime, server_default=func.now())
 
+
+class GalleryItem(Base):
+    __tablename__ = "GalleryItem"
+
+    id: Mapped[str] = mapped_column(String(191), primary_key=True)
+    imageUrl: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    caption: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    sortOrder: Mapped[int] = mapped_column(Integer, server_default="0", index=True)
+    isPublished: Mapped[bool] = mapped_column(Boolean, server_default="1", index=True)
+    createdAt: Mapped[str] = mapped_column(DateTime, server_default=func.now())
+    updatedAt: Mapped[str] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
