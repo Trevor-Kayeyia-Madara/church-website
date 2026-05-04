@@ -27,11 +27,7 @@ try:
     engine = create_engine(settings.sqlalchemy_database_url, pool_pre_ping=True, future=True)
     init_admin_db(engine)
     
-    # Admin credentials - CHANGE THESE!
-    ADMIN_USERNAME = 'admin'
-    ADMIN_EMAIL = 'admin@dcutawala.org'
-    ADMIN_PASSWORD = 'Uta@2026.dc'  # ⚠️ CHANGE THIS BEFORE RUNNING!
-    
+
     with SessionLocal() as db:
         existing = db.execute(
             select(AdminUser).where(AdminUser.username == ADMIN_USERNAME)
