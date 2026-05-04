@@ -5,20 +5,18 @@ import sys
 import os
 
 # Add backend to path (adjust if your folder name is different)
-backend_dir = '/home/dcutawal/backend-app'  # ← CHANGE THIS if your folder is different
+backend_dir = '/backend-app'  # ← CHANGE THIS if your folder is different
 if os.path.exists(backend_dir):
     sys.path.insert(0, backend_dir)
 else:
     # Try alternative path
-    alt_dir = '/home/dcutawal/deliverance-church-utawala-app'
+    alt_dir = '/backend-app'
     if os.path.exists(alt_dir):
         sys.path.insert(0, alt_dir)
         backend_dir = alt_dir
 
-# Set environment variables manually (since .env may not load in cPanel executor)
-os.environ['DATABASE_URL'] = 'mysql://church_user:YOUR_DB_PASSWORD@localhost:3306/church_db'  # ← CHANGE THIS
-os.environ['CORS_ALLOW_ORIGINS'] = 'https://dcutawala.org,https://www.dcutawala.org'
-os.environ['FLASK_ENV'] = 'production'
+# Environment variables should be set in cPanel under "Set Python App" for your application.
+# Required: DATABASE_URL, CORS_ALLOW_ORIGINS, FLASK_ENV
 
 try:
     from app.db import SessionLocal, create_engine
@@ -33,7 +31,7 @@ try:
     # Admin credentials - CHANGE THESE!
     ADMIN_USERNAME = 'admin'
     ADMIN_EMAIL = 'admin@dcutawala.org'
-    ADMIN_PASSWORD = 'SecurePassword123!'  # ⚠️ CHANGE THIS BEFORE RUNNING!
+    ADMIN_PASSWORD = 'Uta@2026.dc'  # ⚠️ CHANGE THIS BEFORE RUNNING!
     
     with SessionLocal() as db:
         existing = db.execute(

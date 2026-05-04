@@ -1,35 +1,34 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
-    // Check if already logged in
-    const token = localStorage.getItem("admin_token") || document.cookie.match(/admin_token=([^;]+)/)?.[1];
+    const token = localStorage.getItem("admin_token") || 
+                 document.cookie.match(/admin_token=([^;]+)/)?.[1];
     if (token) {
-      router.push("/admin");
+      setAuthenticated(true);
     }
-  }, [router]);
+  }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.dcutawala.org";
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || "https://api.dcutawala.org";
       const res = await fetch(`${backendUrl}/api/admin/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
+        credentials: "include",
       });
 
       const data = await res.json();
@@ -38,21 +37,25 @@ export default function AdminLoginPage() {
         throw new Error(data.error || "Login failed");
       }
 
-      // Store token in localStorage and cookie
       localStorage.setItem("admin_token", data.token);
-      document.cookie = `admin_token=${data.token}; path=/; max-age=86400`; // 24 hours
+      document.cookie = `admin_token=${data.token}; path=/; max-age=86400`;
 
-      // Redirect to admin dashboard
-      router.push("/admin");
-    } catch (err: any) {
+      setAuthenticated(true);
+    } catch (err) {
       setError(err.message || "Invalid credentials");
     } finally {
       setLoading(false);
     }
   }
 
+  if (authenticated) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  const from = location.state?.from?.pathname || "/admin";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-[80vh] flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8">
         <div className="text-center mb-8">
           <p className="text-accent/90 text-xs font-black tracking-[0.25em] uppercase">Admin</p>
@@ -105,9 +108,9 @@ export default function AdminLoginPage() {
         </form>
 
         <div className="mt-6 text-center">
-          <Link href="/" className="text-sm text-white/60 hover:text-white font-bold">
+          <a href="/" className="text-sm text-white/60 hover:text-white font-bold">
             ← Back to Home
-          </Link>
+          </a>
         </div>
       </div>
     </div>
