@@ -1,290 +1,150 @@
-# cPanel Deployment Guide - NO TERMINAL/SSH ACCESS
+# cPanel Deployment Without Terminal Access
 
-## All steps use only cPanel web interface (File Manager, UI forms)
+If you cannot use cPanel Terminal/SSH, you can still deploy the Django backend using only cPanel File Manager and the Python App UI.
 
----
+## 1. Upload Backend Files via File Manager
 
-## ✅ STEP 1: Upload Files via File Manager
+1. Open cPanel → **File Manager**.
+2. Navigate to `/home/username/public_html/` or your preferred web root.
+3. Upload the `backend/` folder as a ZIP archive.
+4. After upload, right-click the ZIP and choose **Extract**.
+5. Confirm the extracted files include: `manage.py`, `requirements.txt`, `.env`, `backend/`, `apps/`, `public/`.
 
-1. In cPanel, open **File Manager**
-2. Navigate to: `/home/dcutawal/`
-3. Click **+ Upload**
-4. Upload the entire `deliverance-church-utawala-app` folder (zip it first if needed)
-5. Extract: Right-click zip → **Extract** → extract to `/home/dcutawal/`
-6. Final path should be: `/home/dcutawal/deliverance-church-utawala-app/`
-7. Verify `passenger_wsgi.py` is inside this folder (not nested)
+## 2. Create the Python App in cPanel UI
 
----
-
-## ✅ STEP 2: Create Python App
-
-1. In cPanel, find **Setup Python App** (or **Application Manager**)
-2. Click **Create Application**
+1. Go to cPanel → **Setup Python App**.
+2. Click **Create Application**.
 3. Configure:
-   - **Python Version**: 3.11 or 3.12
-   - **Application root**: `/home/dcutawal/deliverance-church-utawala-app`
-   - **Application startup file**: `passenger_wsgi.py`
-   - **Application entry point**: `application`
-4. Click **Create**
+   - Python version: `3.11` or `3.12`
+   - Application root: `/home/username/public_html/backend`
+   - Application startup file: `backend/wsgi.py`
+   - Application entry point: `application`
+   - Application URL: your API domain or subdomain
+4. Click **Create**.
 
-✅ App now appears in the list. Note the **Application URL** (usually `http://dcutawal.pythonanywhere.com` or similar — we'll fix domain later).
+This setup will create the virtual environment automatically.
 
----
+## 3. Install Python Packages Without Terminal
 
-## ✅ STEP 3: Install Dependencies (No Terminal)
+### Option A: Use cPanel's Python App UI package installer
 
-**Method A: cPanel "Run Pip Install" (Easiest)**
+Some cPanel installations let you install packages directly from the Python App interface.
 
-1. In **Setup Python App**, find your app
-2. Click **Show python app path** → **Enter** virtualenv
-3. You'll see a section: **"Install a module"**
-4. In the text box, type: `-r requirements.txt`
-5. Click **Install**
-6. Wait — it will read all packages from `requirements.txt` and install them
+1. Open the Python App you created.
+2. Look for a package install field or a button to install dependencies.
+3. Install from `requirements.txt` if supported, or add packages manually:
+   - `Django==5.1`
+   - `djangorestframework==3.15.2`
+   - `django-cors-headers==4.4.0`
+   - `mysqlclient==2.2.4`
+   - `Pillow==10.4.0`
+   - `python-dotenv==1.0.1`
 
-**Method B: File Manager Upload wheel files** (if Method A fails)
-- Download packages on your computer
-- Upload via File Manager
-- Install manually (not recommended)
+### Option B: Upload a prebuilt `venv/`
 
----
+If the UI cannot install packages, you can upload a local virtual environment.
 
-## ✅ STEP 4: Create MySQL Database
+1. On your local machine, create a Python venv and install requirements.
+2. Zip the `venv/` folder.
+3. Upload `venv.zip` into `/home/username/public_html/backend/`.
+4. Extract it in File Manager.
+5. Make sure the Python App points to the existing `venv/` directory.
 
-1. In cPanel, open **MySQL® Databases**
-2. **Create New Database**: name it `church_db`
-   - cPanel adds prefix (e.g. `dcutawal_church_db`)
-   - Note the full name!
-3. **Create New User**:
-   - Username: `church_user` (or any)
-   - Generate strong password → **Generate** → **Copy** password!
-4. **Add User To Database**:
-   - Select user + database → **Add**
-   - Check **ALL PRIVILEGES**
-   - Click **Make Changes**
-5. **NOTE FULL DATABASE NAME** (with cPanel prefix)
+> Note: Uploading a full `venv/` can be large, but it avoids terminal commands.
 
----
+## 4. Configure `.env` in File Manager
 
-## ✅ STEP 5: Create .env File via File Manager
-
-1. In **File Manager**, go to: `/home/dcutawal/deliverance-church-utawala-app/`
-2. Click **+ File** → name it `.env` → **Create**
-3. Right-click `.env` → **Edit**
-4. Paste content (replace placeholders):
+1. Open `/home/username/public_html/backend/.env` in File Manager.
+2. Set database values from cPanel MySQL Databases:
 
 ```env
-DATABASE_URL=mysql://church_user:YOUR_DB_PASSWORD@localhost:3306/church_db
-CORS_ALLOW_ORIGINS=https://dcutawala.org,https://www.dcutawala.org
-API_PREFIX=
-FRONTEND_DIST_DIR=
-YOUTUBE_MAX_RESULTS=50
-FLASK_ENV=production
-FLASK_DEBUG=0
+DB_NAME=your_database_name
+DB_USER=your_database_user
+DB_PASSWORD=your_database_password
+DB_HOST=localhost
+DB_PORT=3306
 ```
 
-5. **Replace**:
-   - `YOUR_DB_PASSWORD` → actual password from Step 4
-   - `church_db` → full database name (with cPanel prefix if added)
-   - `church_user` → full username (with cPanel prefix if added)
-
-6. Click **Save Changes**
-
----
-
-## ✅ STEP 6: Create Admin User (via "Execute Python Script")
-
-1. In cPanel → **Setup Python App**
-2. Find your app → Click **Show python app path** → **Enter**
-3. Look for **"Execute python script"** section
-4. In the field, type: `init_admin.py`
-5. Click **Run** (or **Execute**)
-6. You'll see a text output area — it should prompt for username, email, password
-7. Type your choices (each followed by Enter)
-8. If it errors, check `.env` exists (Step 5)
-
-**Alternative if "Execute python script" doesn't support interactive input:**
-
-Create a one-time setup script:
-
-**In File Manager → New File** → `setup_admin.py` (in app folder):
-
-```python
-import sys
-sys.path.insert(0, '/home/dcutawal/deliverance-church-utawala-app')
-
-from app.db import SessionLocal, create_engine
-from app.admin_auth import AdminUser, init_admin_db
-from app.config import settings
-from sqlalchemy import select
-
-# Build engine
-engine = create_engine(settings.sqlalchemy_database_url, pool_pre_ping=True, future=True)
-init_admin_db(engine)
-
-# Create admin
-with SessionLocal() as db:
-    admin = AdminUser(
-        username='admin',
-        email='admin@dcutawala.org',
-    )
-    admin.set_password('YOUR_SECURE_PASSWORD')
-    db.add(admin)
-    db.commit()
-    print("Admin created: admin / YOUR_SECURE_PASSWORD")
-```
-
-1. Save file
-2. In cPanel → **Setup Python App** → **Execute python script** → type: `setup_admin.py`
-3. Click **Run**
-4. Check output — should say "Admin created..."
-5. **DELETE** `setup_admin.py` after use (security!)
-
----
-
-## ✅ STEP 7: Create Subdomain (api.dcutawala.org)
-
-1. In cPanel → **Subdomains**
-2. **Subdomain**: `api`
-3. **Domain**: `dcutawala.org`
-4. **Document Root**: `/home/dcutawal/deliverance-church-utawala-app`
-5. Click **Create**
-
----
-
-## ✅ STEP 8: Wait & Restart App
-
-1. Wait 5–10 minutes for DNS to propagate
-2. In **Setup Python App**, find your app
-3. Click **Restart Application**
-4. Wait ~30 seconds
-
----
-
-## ✅ STEP 9: Test via Browser
-
-Open these URLs (replace with your actual cPanel assigned URL if different):
-
-### **If api.dcutawala.org is LIVE:**
-
-```
-https://api.dcutawala.org/health
-```
-Expected: `{"ok":true}`
-
-```
-https://api.dcutawala.org/api/site
-```
-Expected: JSON with site settings
-
-```
-https://api.dcutawala.org/api/admin/auth/login
-```
-(Return 401 or error — that's OK; it means route exists)
-
-### **If subdomain not yet propagated**, use the cPanel Application URL:
-
-Find it in **Setup Python App** → your app → **Application URL**
-
-Visit:
-```
-[Application URL]/health
-```
-
----
-
-## ✅ STEP 10: Install SSL Certificate (HTTPS)
-
-1. In cPanel → **SSL/TLS** → **Manage SSL Sites**
-2. Select `api.dcutawala.org`
-3. Click **Run AutoSSL**
-4. Wait (email notification when ready)
-5. After issued, visit `https://api.dcutawala.org/health`
-
----
-
-## ✅ STEP 11: Configure Frontend
-
-In your frontend cPanel hosting (main domain):
-
-**File Manager** → edit frontend `.env` file (or env vars in hosting platform):
+3. Set CORS origins to your frontend domain:
 
 ```env
-NEXT_PUBLIC_BACKEND_URL=https://api.dcutawala.org
+CORS_ALLOWED_ORIGINS=https://yourfrontend.com,https://www.yourfrontend.com
 ```
 
-Rebuild frontend if needed.
+4. Set a strong setup token:
 
----
+```env
+ADMIN_SETUP_TOKEN=replace-with-a-strong-secret
+```
 
-## 🔍 Troubleshooting (No Terminal)
+5. For production, set:
 
-### **500 Internal Server Error**
+```env
+DEBUG=False
+ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
+```
 
-1. In cPanel → **Metrics** → **Errors**
-2. Scroll to recent errors
-3. Look for:
-   - `ModuleNotFoundError` → dependencies not installed (go to Step 3)
-   - `ImportError` → file missing or wrong path
-   - `Database connection` → check `.env` DATABASE_URL format
+## 5. Create the First Admin User Without Terminal
 
-**Fix ModuleNotFound via cPanel UI:**
-- Setup Python App → Show python app path → Enter
-- Use "Install a module" → type package name (e.g., `Flask==3.0.3`) → Install one by one
-- OR type `-r /home/dcutawal/deliverance-church-utawala-app/requirements.txt`
+This backend includes a one-time setup endpoint for creating the first superuser.
 
----
+### Use this endpoint only once:
 
-### **"ImportError: cannot import name 'AdminUser'"**
+```http
+POST /api/admin/auth/setup-admin
+Content-Type: application/json
+X-ADMIN-SETUP-TOKEN: your-token-here
+```
 
-1. File Manager → navigate to `app/`
-2. Confirm `admin_auth.py` exists
-3. Right-click → **Permissions** → set to `644`
-4. Do same for all `.py` files: select all → **Permissions** → `644`
+Body:
+```json
+{
+  "username": "admin",
+  "password": "StrongPassword123!",
+  "email": "admin@example.com"
+}
+```
 
----
+If successful, it returns:
+```json
+{"ok": true, "user": {"id": 1, "username": "admin", "email": "admin@example.com"}}
+```
 
-### **Database Connection Error**
+### If you cannot call this endpoint
+If you cannot access the app yet, ask your hosting provider to run the first admin creation command for you:
 
-1. Double-check `.env` DATABASE_URL:
-   - Username: includes cPanel prefix if any (e.g. `dcutawal_church_user`)
-   - Password: exact from Step 4
-   - Database: exact name from Step 4
-   - Host: `localhost`
-2. MySQL Databases → Confirm user has **ALL PRIVILEGES** on that DB
+```bash
+cd /home/username/public_html/backend
+source venv/bin/activate
+python manage.py createsuperuser
+```
 
----
+## 6. Restart the Python App in cPanel
 
-### **App not restarting**
+Once `.env` is configured and packages are installed, use cPanel UI:
 
-1. In **Setup Python App**, click **Restart Application**
-2. If still fails, click **Delete Application** and **recreate** (Step 2) — paths unchanged
+- cPanel → **Setup Python App**
+- Find your app
+- Click **Restart**
 
----
+## 7. Test the Deployment
 
-## 📋 QUICK CHECKLIST
+1. Open `https://your-api-domain.com/admin/` and verify the Django admin login page.
+2. Call `GET /api/admin/auth/me` to confirm the backend is reachable.
+3. Use login endpoint if needed:
 
-- [ ] Files uploaded to `/home/dcutawal/deliverance-church-utawala-app/`
-- [ ] Python App created: root=`...deliverance-church-utawala-app`, startup=`passenger_wsgi.py`, entry=`application`
-- [ ] Dependencies installed via "Install a module" using `-r requirements.txt`
-- [ ] MySQL DB created (`church_db` + user with password)
-- [ ] `.env` file created with `DATABASE_URL` (correct username/password/db)
-- [ ] Admin user created (via Execute python script → `init_admin.py`)
-- [ ] Subdomain `api.dcutawala.org` → Document root: `/home/dcutawal/deliverance-church-utawala-app`
-- [ ] SSL installed via AutoSSL
-- [ ] `https://api.dcutawala.org/health` → returns `{"ok":true}`
-- [ ] Admin login test returns token
-- [ ] Frontend `NEXT_PUBLIC_BACKEND_URL` set to `https://api.dcutawala.org`
+```http
+POST /api/admin/auth/login
+Content-Type: application/json
+```
 
----
+Body:
+```json
+{ "username": "admin", "password": "StrongPassword123!" }
+```
 
-## 🎯 After Backend Works
+## 8. Notes
 
-1. Build frontend locally: `cd frontend && npm run build`
-2. Upload `frontend/dist/` to cPanel (public_html or subdomain `dcutawala.org`)
-3. Set frontend env variable to point to backend
-4. Test full site: `https://dcutawala.org`
-
----
-
-**All steps avoid terminal/SSH. Use File Manager, Setup Python App UI, MySQL Databases, Subdomains, and SSL/TLS.**
+- If your cPanel UI cannot install Python packages, the only remaining option is upload a working `venv/` or ask host support.
+- After you create the first admin, remove or unset `ADMIN_SETUP_TOKEN` from `.env`.
+- If `DEBUG=True`, only use this during initial setup; switch to `DEBUG=False` after deployment.
