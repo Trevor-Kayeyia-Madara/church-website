@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.conf import settings
@@ -49,6 +50,7 @@ class CustomModelViewSet(viewsets.ModelViewSet):
         return Response({'ok': True, 'message': f'{self.get_queryset().model.__name__} deleted'})
 
 
+@csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
@@ -61,7 +63,8 @@ def login_view(request):
     return Response({'error': 'Invalid credentials'}, status=401)
 
 
-@api_view(['POST'])
+@csrf_exempt
+@api_view(['POST', 'OPTIONS'])
 @permission_classes([AllowAny])
 def setup_admin_view(request):
     if User.objects.filter(is_superuser=True).exists():
@@ -83,6 +86,7 @@ def setup_admin_view(request):
     return Response({'ok': True, 'user': {'id': user.id, 'username': user.username, 'email': user.email}})
 
 
+@csrf_exempt
 @api_view(['POST'])
 def logout_view(request):
     logout(request)

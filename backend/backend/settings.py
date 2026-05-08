@@ -9,8 +9,15 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load .env file when present
-load_dotenv(BASE_DIR / '.env')
+# Load .env from backend root first, then parent root if present.
+backend_env = BASE_DIR / '.env'
+root_env = BASE_DIR.parent / '.env'
+if backend_env.exists():
+    load_dotenv(backend_env)
+elif root_env.exists():
+    load_dotenv(root_env)
+else:
+    load_dotenv(backend_env)
 
 
 # Quick-start development settings - unsuitable for production
@@ -43,6 +50,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'backend.middleware.ForceApiCorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -133,7 +141,44 @@ MEDIA_ROOT = BASE_DIR / 'public' / 'uploads'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',')
+cors_origins = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').strip()
+if cors_origins == '*' or cors_origins.lower() == 'all':
+    CORS_ALLOW_ALL_ORIGINS = True
+    CORS_ALLOWED_ORIGINS = []
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins.split(',') if origin.strip()]
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'x-admin-setup-token',
+]
+CORS_URLS_REGEX = r'^/api/.*$'
+CORS_ALLOWED_ORIGIN_REGEXES = [r'^https://.*$']
+
+# Cross-site cookies for frontend/api split
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = True
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'https://www.dcutawala.org,https://api.dcutawala.org').split(',')
 
 # REST Framework
 REST_FRAMEWORK = {
