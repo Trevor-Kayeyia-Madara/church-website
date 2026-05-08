@@ -11,7 +11,6 @@ sys.path.insert(0, str(backend_dir))
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import sessionmaker
 from app.config import settings
 from app.admin_auth import AdminUser, init_admin_db
 

@@ -2,11 +2,36 @@ import { NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "https://api.dcutawala.org";
 
-function getAdminToken(request: Request): string | null {
-  const authHeader = request.headers.get("Authorization");
-  if (authHeader?.startsWith("Bearer ")) {
-    return authHeader.replace("Bearer ", "");
-  }
+async function fetchBackend(path: string, options: RequestInit = {}, request?: Request) {
+  // Forward cookies for session-based auth
+  const cookieHeader = request?.headers.get("Cookie") || "";
+
+  const res = await fetch(`${BACKEND_URL}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      ...(options.headers || {}),
+    },
+  });
+  return res;
+}
+
+export async function GET(request: Request) {
+  const res = await fetchBackend("/api/admin/sermons", {}, request);
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
+}
+
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({}));
+  const res = await fetchBackend("/api/admin/sermons", {
+    method: "POST",
+    body: JSON.stringify(body),
+  }, request);
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
+}
   const cookieHeader = request.headers.get("Cookie") || "";
   const match = cookieHeader.match(/admin_token=([^;]+)/);
   return match ? match[1] : null;

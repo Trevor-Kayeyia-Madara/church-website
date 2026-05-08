@@ -4,57 +4,74 @@
 import sys
 import os
 
-# Add backend to path (adjust if your folder name is different)
-backend_dir = '/home/dcutawal/backend-app'  # ← CHANGE THIS if your folder is different
-if os.path.exists(backend_dir):
-    sys.path.insert(0, backend_dir)
-else:
-    # Try alternative path
-    alt_dir = '/home/dcutawal/deliverance-church-utawala-app'
-    if os.path.exists(alt_dir):
-        sys.path.insert(0, alt_dir)
-        backend_dir = alt_dir
+def main():
+    # Add backend to path (adjust if your folder name is different)
+    backend_dir = os.path.dirname(os.path.abspath(__file__))
+    if os.path.exists(backend_dir):
+        sys.path.insert(0, backend_dir)
 
-# Set environment variables manually (since .env may not load in cPanel executor)
-os.environ['DATABASE_URL'] = 'mysql://church_user:YOUR_DB_PASSWORD@localhost:3306/church_db'  # ← CHANGE THIS
-os.environ['CORS_ALLOW_ORIGINS'] = 'https://dcutawala.org,https://www.dcutawala.org'
-os.environ['FLASK_ENV'] = 'production'
+    # Set environment variables from .env file if it exists
+    from dotenv import load_dotenv
+    dotenv_path = os.path.join(backend_dir, '.env')
+    if os.path.exists(dotenv_path):
+        load_dotenv(dotenv_path)
 
-try:
-    from app.db import SessionLocal, create_engine
-    from app.admin_auth import AdminUser, init_admin_db
-    from app.config import settings
-    from sqlalchemy import select
-    
-    # Build engine
-    engine = create_engine(settings.sqlalchemy_database_url, pool_pre_ping=True, future=True)
-    init_admin_db(engine)
-    
+    # Environment variables can also be set in cPanel or in .env file
+    # Required: DATABASE_URL
+    # Optional: CORS_ALLOW_ORIGINS, API_PREFIX, FRONTEND_DIST_DIR
 
-    with SessionLocal() as db:
-        existing = db.execute(
-            select(AdminUser).where(AdminUser.username == ADMIN_USERNAME)
-        ).scalar_one_or_none()
+    try:
+        from app.db import SessionLocal, create_engine
+        from app.admin_auth import AdminUser, init_admin_db
+        from app.config import settings
+        from sqlalchemy import select
         
-        if existing:
-            print(f"Admin user '{ADMIN_USERNAME}' already exists (ID: {existing.id})")
-            sys.exit(0)
+        # Build engine
+        engine = create_engine(settings.sqlalchemy_database_url, pool_pre_ping=True, future=True)
+        init_admin_db(engine)
         
-        admin = AdminUser(username=ADMIN_USERNAME, email=ADMIN_EMAIL)
-        admin.set_password(ADMIN_PASSWORD)
-        db.add(admin)
-        db.commit()
+        # Admin credentials from environment or defaults
+        admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
+        admin_email = os.environ.get('ADMIN_EMAIL', 'admin@dcutawala.org')
+        admin_password = os.environ.get('ADMIN_PASSWORD', 'ChangeMe123!')
         
-        print(f"✅ Admin user created successfully!")
-        print(f"   Username: {ADMIN_USERNAME}")
-        print(f"   Email: {ADMIN_EMAIL}")
-        print(f"   Password: {ADMIN_PASSWORD}")
-        print()
-        print("🔐 IMPORTANT: Change this password after first login!")
-        print("   You can reset it later with: python admin_manage.py reset admin")
+        print(f"Creating admin user: {admin_username}")
         
-except Exception as e:
-    print(f"❌ Error: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+        with SessionLocal() as db:
+            existing = db.execute(
+                select(AdminUser).where(AdminUser.username == admin_username)
+            ).scalar_one_or_none()
+            
+            if existing:
+                print(f"[WARNING] Admin user '{admin_username}' already exists (ID: {existing.id})")
+                print("   To create a new one, delete the existing user first:")
+                print(f"   python init_admin.py delete {admin_username}")
+                return
+            
+            admin = AdminUser(username=admin_username, email=admin_email)
+            admin.set_password(admin_password)
+            db.add(admin)
+            db.commit()
+            db.refresh(admin)
+            
+            print(f"\n[OK] Admin user created successfully!")
+            print(f"   Username: {admin_username}")
+            print(f"   Email: {admin_email}")
+            print(f"   Password: {admin_password}")
+            print()
+            print("[WARNING] IMPORTANT: Change this password after first login!")
+            print("   You can reset it later with: python admin_manage.py reset admin")
+            print()
+            print("Login URL: http://localhost:3000/admin")
+            return
+            
+    except Exception as e:
+        print(f"[ERROR] {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+
+

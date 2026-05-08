@@ -1,0 +1,54 @@
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# cPanel Table Setup - Quick Reference
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#
+# RUN THIS IN CPANEL TERMINAL (or SSH):
+#
+# ┌─────────────────────────────────────────┐
+# │  METHOD 1: Python (Recommended)         │
+# └─────────────────────────────────────────┘
+# cd /home/dcutawal/deliverance-church-utawala-app/backend
+# python setup_tables.py
+#
+# ┌─────────────────────────────────────────┐
+# │  METHOD 2: Pure SQL                     │
+# └─────────────────────────────────────────┘
+# mysql -u church_user -p church_db < SQL_Create_Session_Table.sql
+#
+# ┌─────────────────────────────────────────┐
+# │  METHOD 3: One-Liner (Direct SQL)       │
+# └─────────────────────────────────────────┘
+# mysql -u church_user -p church_db -e "
+# CREATE TABLE IF NOT EXISTS Session (
+#     id VARCHAR(128) PRIMARY KEY,
+#     adminId INT NOT NULL,
+#     expiresAt DATETIME NOT NULL,
+#     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+#     INDEX idx_admin_id (adminId),
+#     FOREIGN KEY (adminId) REFERENCES AdminUser(id)
+# ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;"
+#
+# ┌─────────────────────────────────────────┐
+# │  AFTER CREATING TABLES                  │
+# └─────────────────────────────────────────┘
+# python init_admin.py create    # Create first admin user
+# flask run --port=8000          # Start backend
+#
+# ┌─────────────────────────────────────────┐
+# │  VERIFY TABLES EXIST                    │
+# └─────────────────────────────────────────┘
+# mysql -u church_user -p church_db -e "SHOW TABLES;"
+#
+# Should see:
+#   - AdminUser   (existing)
+#   - Session     (new)
+#   - Category
+#   - Sermon
+#   - Event
+#   - Pastor
+#   - Ministry
+#   - SiteSettings
+#   - Message
+#   - GalleryItem
+#   - Donation
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

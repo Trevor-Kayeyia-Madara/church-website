@@ -18,7 +18,7 @@ function extFromType(type) {
 }
 
 export async function POST(request) {
-  const session = await getAdminSession();
+  const session = await getAdminSession(request);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

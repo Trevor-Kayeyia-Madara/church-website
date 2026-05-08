@@ -12,14 +12,24 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Check if already logged in
-    const token = localStorage.getItem("admin_token") || document.cookie.match(/admin_token=([^;]+)/)?.[1];
-    if (token) {
-      router.push("/admin");
-    }
+    // Check if already logged in by calling /api/admin/auth/me
+    // This will send the httpOnly cookie automatically if present
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/admin/auth/me", {
+          credentials: "include",
+        });
+        if (res.ok) {
+          router.push("/admin");
+        }
+      } catch (err) {
+        // Not logged in, stay on login page
+      }
+    };
+    checkAuth();
   }, [router]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -29,21 +39,22 @@ export default function AdminLoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
+        credentials: "include",
       });
 
       const data = await res.json();
 
-      if (!res.ok || !data.ok) {
+      if (!res.ok) {
         throw new Error(data.error || "Login failed");
       }
 
-      // Store token in localStorage and cookie
-      localStorage.setItem("admin_token", data.token);
-      document.cookie = `admin_token=${data.token}; path=/; max-age=86400`; // 24 hours
+      // No need to manually store token - httpOnly cookie is set automatically
+      // The layout page will verify session via /api/admin/auth/me
 
       // Redirect to admin dashboard
       router.push("/admin");
-    } catch (err: any) {
+      router.refresh(); // Force layout to re-check auth
+    } catch (err) {
       setError(err.message || "Invalid credentials");
     } finally {
       setLoading(false);

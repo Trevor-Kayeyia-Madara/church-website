@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from flask import Flask, abort, jsonify, request
 from sqlalchemy import asc, desc, select, update, delete, func
+from sqlalchemy.orm import Session as SQLSession
 
-from app.admin_auth import require_admin_auth, init_admin_db, AdminUser, generate_token
+from app.admin_auth import require_admin_auth, init_admin_db, AdminUser, _create_session, _revoke_all_admin_sessions, _validate_session
 from app.db import SessionLocal
 from app.models import Sermon, Event, Pastor, Ministry, Message, SiteSettings, GalleryItem, Category
 
@@ -25,7 +27,7 @@ def register_admin_routes(app: Flask) -> None:
 
     @app.post("/api/admin/auth/login")
     def admin_login():
-        """Admin user login - returns a bearer token"""
+        """Admin user login - creates a persistent session and returns it via httpOnly cookie"""
         json_data = request.get_json(silent=True) or {}
         username = json_data.get("username", "").strip()
         password = json_data.get("password", "").strip()
@@ -41,33 +43,137 @@ def register_admin_routes(app: Flask) -> None:
             if not user or not user.check_password(password):
                 return jsonify({"error": "Invalid credentials"}), 401
 
-            token = generate_token()
-            return jsonify({
+            # Create persistent session in database
+            session_id = _create_session(user.id, days=7)
+
+            response = jsonify({
                 "ok": True,
-                "token": token,
                 "user": {
                     "id": user.id,
                     "username": user.username,
                     "email": user.email,
                 },
             })
+            # Set httpOnly cookie (secure in production, but works for both http/https)
+            samesite = "Lax"
+            response.set_cookie(
+                "admin_session",
+                session_id,
+                httponly=True,
+                max_age=7 * 24 * 3600,  # 7 days
+                samesite=samesite,
+            )
+            return response
+
+    @app.post("/api/admin/auth/google/callback")
+    def admin_google_callback():
+        """
+        Google OAuth callback handler.
+        Expected: POST with {"googleId": "...", "email": "...", "name": "..."}
+        Creates or finds admin user and establishes session.
+        This is a simplified version - in production use full OAuth2 flow.
+        """
+        json_data = request.get_json(silent=True) or {}
+        google_id = json_data.get("googleId", "").strip()
+        email = json_data.get("email", "").strip()
+        name = json_data.get("name", "").strip()
+
+        if not google_id or not email:
+            return jsonify({"error": "Google ID and email required"}), 400
+
+        with SessionLocal() as db:
+            # Try to find admin by email
+            user = db.execute(
+                select(AdminUser).where(AdminUser.email == email, AdminUser.is_active == True)
+            ).scalar_one_or_none()
+
+            if not user:
+                # Auto-create admin user from Google login
+                # Auto-generate username from email
+                username = email.split("@")[0].lower()
+                # Handle duplicate usernames
+                base_username = username
+                counter = 1
+                while db.execute(
+                    select(AdminUser).where(AdminUser.username == username)
+                ).scalar_one_or_none():
+                    username = f"{base_username}{counter}"
+                    counter += 1
+
+                user = AdminUser(
+                    username=username,
+                    email=email,
+                    is_active=True,
+                )
+                # Set a random password (won't be used for Google-authed users)
+                import secrets
+                import string
+                random_pass = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
+                user.set_password(random_pass)
+                db.add(user)
+                db.commit()
+                db.refresh(user)
+
+            if not user.is_active:
+                return jsonify({"error": "Admin account is not active"}), 403
+
+            # Create persistent session
+            session_id = _create_session(user.id, days=7)
+
+            response = jsonify({
+                "ok": True,
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "method": "google",
+                },
+            })
+            samesite = "Lax"
+            response.set_cookie(
+                "admin_session",
+                session_id,
+                httponly=True,
+                max_age=7 * 24 * 3600,
+                samesite=samesite,
+            )
+            return response
 
     @app.post("/api/admin/auth/logout")
     @require_admin_auth
     def admin_logout():
-        """Logout - revoke the token"""
-        token = request.headers.get("Authorization", "").replace("Bearer ", "")
-        revoke_token(token)
-        return jsonify({"ok": True})
+        """Logout - revoke the session"""
+        cookie_header = request.headers.get("Cookie", "")
+        cookie_match = cookie_header.match(r"admin_session=([^;]+)")
+        session_id = cookie_match.group(1) if cookie_match else None
+
+        if session_id:
+            _revoke_session(session_id)
+
+        response = jsonify({"ok": True})
+        response.delete_cookie("admin_session")
+        return response
+
+    @app.post("/api/admin/auth/revoke-all")
+    @require_admin_auth
+    def admin_revoke_all():
+        """Revoke all sessions for current user (e.g. on password change)"""
+        _revoke_all_admin_sessions(request.admin_user.id)
+        return jsonify({"ok": True, "message": "All sessions revoked"})
 
     @app.get("/api/admin/auth/me")
     @require_admin_auth
     def admin_me():
         """Get current admin user info"""
-        token = request.headers.get("Authorization", "").replace("Bearer ", "")
-        with SessionLocal() as db:
-            # This is simplified - in prod you'd store user_id with token
-            return jsonify({"ok": True, "authenticated": True})
+        return jsonify({
+            "ok": True,
+            "authenticated": True,
+            "user": {
+                "id": request.admin_user.id,
+                "username": request.admin_user.username,
+                "email": request.admin_user.email,
+            },
+        })
 
     # ============ ADMIN CRUD ENDPOINTS ============
 

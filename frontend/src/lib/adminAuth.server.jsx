@@ -1,21 +1,26 @@
-import { auth, AUTH_CONFIGURED } from "@/auth";
+import { NextResponse } from "next/server";
 
-function parseAllowedEmails() {
-  const raw = process.env.AUTH_ALLOWED_EMAILS || "";
-  return raw
-    .split(",")
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+export async function getAdminSession(request) {
+  // Validate session by calling backend /api/admin/auth/me with cookies
+  const cookieHeader = request.headers.get("Cookie") || "";
+  
+  const res = await fetch(`${BACKEND_URL}/api/admin/auth/me`, {
+    headers: {
+      Cookie: cookieHeader,
+    },
+  });
+
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.user || null;
 }
 
-export async function getAdminSession() {
-  if (!AUTH_CONFIGURED) return null;
-  const session = await auth().catch(() => null);
-  if (!session?.user) return null;
-
-  const allowed = parseAllowedEmails();
-  const email = String(session.user.email || "").toLowerCase();
-  const isAllowed = !allowed.length || allowed.includes(email);
-  return isAllowed ? session : null;
+export async function checkAdminSession() {
+  // Alternative for use in server components where no request is available
+  // This is async since we'd need to get headers via next/headers
+  return null;
 }
+
 

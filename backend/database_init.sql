@@ -1,6 +1,3 @@
-# Database schema for Deliverance Church Utawala
-# Run this in phpMyAdmin or via MySQL command line before deployment
-# Supports MySQL 5.7+ and MariaDB 10.2+
 
 
 SET FOREIGN_KEY_CHECKS = 0;
