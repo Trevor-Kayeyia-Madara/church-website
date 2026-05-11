@@ -2,8 +2,11 @@ import { formatDate, formatDuration } from "@/lib/format";
 import { Play } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { backendAssetUrl } from "@/lib/apiUrl";
+import { simpleSermonTitle } from "@/lib/text";
 
 export default function SermonCard({ sermon }) {
+  const title = simpleSermonTitle(sermon.title);
   const duration = formatDuration(sermon.durationMinutes);
   const sourceBadge =
     sermon.source === "youtube"
@@ -21,8 +24,8 @@ export default function SermonCard({ sermon }) {
       <div className="relative aspect-video bg-secondary/25">
         {sermon.thumbnailUrl ? (
           <Image
-            src={sermon.thumbnailUrl}
-            alt={sermon.title}
+            src={backendAssetUrl(sermon.thumbnailUrl)}
+            alt={title}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
             className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
@@ -53,7 +56,7 @@ export default function SermonCard({ sermon }) {
       </div>
       <div className="p-5">
         <h3 className="font-black leading-snug max-h-[2.6em] overflow-hidden">
-          {sermon.title}
+          {title}
         </h3>
         <p className="mt-1 text-white/70 text-sm font-bold">
           {sermon.speaker || "Deliverance Church Utawala"}

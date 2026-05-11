@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { backendAssetUrl } from "@/lib/apiUrl";
 
 export default function PastorsWelcomeClient({ pastor }) {
   return (
@@ -21,19 +22,20 @@ export default function PastorsWelcomeClient({ pastor }) {
             <div className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-white/5 border border-white/10">
               {pastor?.photoUrl ? (
                 <Image
-                  src={pastor.photoUrl}
+                  src={backendAssetUrl(pastor.photoUrl)}
                   alt={pastor.name}
                   fill
                   className="object-cover"
                   sizes="(max-width: 1024px) 100vw, 40vw"
                 />
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white/30">
-                  <span className="font-black text-6xl">
-                    {pastor?.name?.charAt(0) || "DC"}
-                  </span>
-                  <span className="mt-2 text-sm text-white/20">Pastor Photo</span>
-                </div>
+                <Image
+                  src="/pst.jpg"
+                  alt="Pastors welcome"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 40vw"
+                />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6">

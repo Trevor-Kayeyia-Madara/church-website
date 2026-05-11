@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
+import { apiUrl, backendAssetUrl } from "@/lib/apiUrl";
 
 async function fetchPastors(limit) {
-  const res = await fetch(`/api/pastors?limit=${encodeURIComponent(String(limit))}`, {
+  const res = await fetch(apiUrl(`/api/pastors?limit=${encodeURIComponent(String(limit))}`), {
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to load pastors");
@@ -52,7 +53,7 @@ export default function LeadershipClient({ limit = 12 }) {
           <div className="aspect-[4/5] relative bg-white/5">
             {pastor.photoUrl ? (
               <Image
-                src={pastor.photoUrl}
+                src={backendAssetUrl(pastor.photoUrl)}
                 alt={pastor.name}
                 fill
                 className="object-cover"
@@ -80,4 +81,3 @@ export default function LeadershipClient({ limit = 12 }) {
     </div>
   );
 }
-

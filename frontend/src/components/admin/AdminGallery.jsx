@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import { apiUrl, backendAssetUrl } from "@/lib/apiUrl";
 
 export default function AdminGallery() {
   const [items, setItems] = useState([]);
@@ -33,7 +34,7 @@ export default function AdminGallery() {
     try {
       const body = new FormData();
       body.set("file", file);
-      const res = await fetch("/api/admin/upload/gallery", {
+      const res = await fetch(apiUrl("/api/admin/upload/gallery"), {
         method: "POST",
         body,
       });
@@ -49,7 +50,7 @@ export default function AdminGallery() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/gallery", { 
+      const res = await fetch(apiUrl("/api/admin/gallery"), { 
         cache: "no-store",
         credentials: "include",
       });
@@ -72,7 +73,7 @@ export default function AdminGallery() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch("/api/admin/gallery", {
+      const res = await fetch(apiUrl("/api/admin/gallery"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -105,7 +106,7 @@ export default function AdminGallery() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/gallery/${editing.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/gallery/${editing.id}`), {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -133,7 +134,7 @@ export default function AdminGallery() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/gallery/${id}`, { method: "DELETE" });
+      const res = await fetch(apiUrl(`/api/admin/gallery/${id}`), { method: "DELETE" });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Delete failed");
       setEditingId(null);
@@ -301,7 +302,7 @@ export default function AdminGallery() {
                 ].join(" ")}
               >
                 <Image
-                  src={img.imageUrl}
+                  src={backendAssetUrl(img.imageUrl)}
                   alt={img.altText || img.title || "Gallery image"}
                   fill
                   className="object-cover"

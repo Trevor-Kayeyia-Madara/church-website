@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { apiUrl } from "@/lib/apiUrl";
 
 const nav = [
   { href: "/admin", label: "Dashboard" },
@@ -17,6 +18,8 @@ const nav = [
 
 export default function AdminShell({ email, children }) {
   const pathname = usePathname();
+  const callbackUrl =
+    typeof window === "undefined" ? "/" : `${window.location.origin}/`;
 
   return (
     <div className="min-h-[calc(100dvh-4rem)]">
@@ -53,7 +56,7 @@ export default function AdminShell({ email, children }) {
 
               <div className="mt-5 pt-5 border-t border-white/10">
                 <Link
-                  href="/api/auth/signout?callbackUrl=/"
+                  href={apiUrl(`/api/auth/signout?callbackUrl=${encodeURIComponent(callbackUrl)}`)}
                   className="inline-flex w-full items-center justify-center rounded-2xl bg-primary text-black font-extrabold px-4 py-3 hover:bg-accent transition-colors"
                 >
                   Sign Out

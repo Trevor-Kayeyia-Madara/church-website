@@ -1,10 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { apiUrl } from "@/lib/apiUrl";
 import MinistryCard from "@/components/MinistryCard";
 
 async function fetchMinistries() {
-  const res = await fetch("/api/ministries", { cache: "no-store" });
+  const res = await fetch(apiUrl("/api/ministries"), { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to load ministries");
   return res.json();
 }
@@ -54,4 +55,3 @@ export default function MinistriesClient() {
     </div>
   );
 }
-

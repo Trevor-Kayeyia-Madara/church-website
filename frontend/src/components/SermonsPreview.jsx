@@ -3,9 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import SermonCard from "./SermonCard";
+import { apiUrl } from "@/lib/apiUrl";
 
 async function fetchSermons() {
-  const res = await fetch("/api/sermons?limit=3&source=youtube", { cache: "no-store" });
+  const res = await fetch(apiUrl("/api/sermons?limit=3"), { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to load sermons");
   return res.json();
 }

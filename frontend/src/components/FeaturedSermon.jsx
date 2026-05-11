@@ -4,12 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { formatDate, formatDuration } from "@/lib/format";
 import { toYouTubeEmbedUrl } from "@/lib/youtube";
+import { apiUrl } from "@/lib/apiUrl";
+import { simpleSermonTitle } from "@/lib/text";
 
 async function fetchLatestYouTube() {
-  const res = await fetch("/api/sermons?limit=1&source=youtube", { cache: "no-store" });
+  const res = await fetch(apiUrl("/api/sermons?limit=1"), { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to load sermon");
   const data = await res.json();
-  return data.items?.[0] || null;
+  return (Array.isArray(data?.items) ? data.items : [])?.[0] || null;
 }
 
 export default function FeaturedSermon() {
@@ -33,6 +35,7 @@ export default function FeaturedSermon() {
 
   if (!sermon) return null;
 
+  const title = simpleSermonTitle(sermon.title);
   const embed = toYouTubeEmbedUrl(sermon.videoUrl);
   const duration = formatDuration(sermon.durationMinutes);
 
@@ -41,7 +44,7 @@ export default function FeaturedSermon() {
       <div className="aspect-video bg-background/40">
         {embed ? (
           <iframe
-            title={sermon.title}
+            title={title}
             className="h-full w-full"
             src={embed}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -55,7 +58,7 @@ export default function FeaturedSermon() {
             Featured Sermon
           </p>
           <h2 className="mt-3 text-2xl sm:text-3xl font-black leading-tight">
-            {sermon.title}
+            {title}
           </h2>
           <p className="mt-2 text-sm font-bold text-white/70">
             {formatDate(sermon.date)}
@@ -73,4 +76,3 @@ export default function FeaturedSermon() {
     </div>
   );
 }
-

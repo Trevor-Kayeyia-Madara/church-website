@@ -399,6 +399,24 @@
           }
         },
         {
+          "name": "Sync YouTube Sermons",
+          "request": {
+            "method": "POST",
+            "description": "Admin-only. Requires a logged-in session cookie. Uses backend env vars: YOUTUBE_API_KEY and YOUTUBE_PLAYLIST_ID or YOUTUBE_CHANNEL_ID.",
+            "url": {
+              "raw": "{{baseUrl}}/api/sermons/sync-youtube",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sermons",
+                "sync-youtube"
+              ]
+            }
+          }
+        },
+        {
           "name": "Create Sermon",
           "request": {
             "method": "POST",

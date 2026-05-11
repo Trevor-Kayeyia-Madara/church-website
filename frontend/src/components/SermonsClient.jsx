@@ -4,20 +4,44 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import SermonCard from "./SermonCard";
+import { apiUrl } from "@/lib/apiUrl";
 
 async function fetchSermons({ page, category, q }) {
-  const params = new URLSearchParams();
-  params.set("page", String(page));
-  params.set("limit", "9");
-  if (category) params.set("category", category);
-  if (q) params.set("q", q);
+  const limit = 9;
+  const res = await fetch(apiUrl("/api/sermons"), { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to load sermons");
+  const json = await res.json();
+  const allItems = Array.isArray(json?.items) ? json.items : [];
 
-  const res = await fetch(`/api/sermons?${params.toString()}`, {
-    cache: "no-store",
+  const normalizedQ = String(q || "").trim().toLowerCase();
+  const filtered = allItems.filter((item) => {
+    if (category && item?.category?.slug !== category) return false;
+    if (!normalizedQ) return true;
+    const haystack = `${item?.title || ""} ${item?.speaker || ""}`.toLowerCase();
+    return haystack.includes(normalizedQ);
   });
 
-  if (!res.ok) throw new Error("Failed to load sermons");
-  return res.json();
+  const categories = Array.from(
+    new Map(
+      allItems
+        .map((item) => item?.category)
+        .filter(Boolean)
+        .map((c) => [c.slug, c]),
+    ).values(),
+  );
+
+  const total = filtered.length;
+  const start = Math.max(0, (page - 1) * limit);
+  const end = start + limit;
+
+  return {
+    ok: true,
+    items: filtered.slice(start, end),
+    categories,
+    total,
+    limit,
+    sources: ["db"],
+  };
 }
 
 export default function SermonsClient() {

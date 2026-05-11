@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { apiUrl } from "@/lib/apiUrl";
 
 async function fetchEvents(limit) {
   const res = await fetch(
-    `/api/events?limit=${encodeURIComponent(String(limit))}&upcoming=true`,
+    apiUrl(`/api/events?limit=${encodeURIComponent(String(limit))}&upcoming=true`),
     {
       cache: "no-store",
     },

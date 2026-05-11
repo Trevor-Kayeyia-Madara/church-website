@@ -7,7 +7,7 @@ export const metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminYouTubePage() {
+export default function AdminYouTubePage() {
   return (
     <div>
       <div className="relative overflow-hidden">

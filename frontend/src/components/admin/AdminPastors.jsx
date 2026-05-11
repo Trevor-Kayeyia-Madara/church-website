@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { apiUrl } from "@/lib/apiUrl";
 
 export default function AdminPastors() {
   const [items, setItems] = useState([]);
@@ -31,7 +32,7 @@ export default function AdminPastors() {
     try {
       const body = new FormData();
       body.set("file", file);
-      const res = await fetch("/api/admin/upload/pastor-photo", {
+      const res = await fetch(apiUrl("/api/admin/upload/pastor-photo"), {
         method: "POST",
         body,
         credentials: "include",
@@ -48,7 +49,7 @@ export default function AdminPastors() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/pastors", { 
+      const res = await fetch(apiUrl("/api/admin/pastors"), { 
         cache: "no-store",
         credentials: "include",
       });
@@ -71,7 +72,7 @@ export default function AdminPastors() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch("/api/admin/pastors", {
+      const res = await fetch(apiUrl("/api/admin/pastors"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -103,7 +104,7 @@ export default function AdminPastors() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/pastors/${editing.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/pastors/${editing.id}`), {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -130,7 +131,7 @@ export default function AdminPastors() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/pastors/${id}`, { 
+      const res = await fetch(apiUrl(`/api/admin/pastors/${id}`), { 
         method: "DELETE",
         credentials: "include",
       });

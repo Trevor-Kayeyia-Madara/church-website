@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { apiUrl } from "@/lib/apiUrl";
 
 function formatWhen(value) {
   const d = value instanceof Date ? value : new Date(value);
@@ -32,7 +33,7 @@ export default function AdminMessages() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/messages", { 
+      const res = await fetch(apiUrl("/api/admin/messages"), { 
         cache: "no-store",
         credentials: "include",
       });
@@ -55,7 +56,7 @@ export default function AdminMessages() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch("/api/admin/messages", {
+      const res = await fetch(apiUrl("/api/admin/messages"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(form),
@@ -77,7 +78,7 @@ export default function AdminMessages() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/messages/${editing.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/messages/${editing.id}`), {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -103,7 +104,7 @@ export default function AdminMessages() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/messages/${id}`, { 
+      const res = await fetch(apiUrl(`/api/admin/messages/${id}`), { 
         method: "DELETE",
         credentials: "include",
       });
@@ -371,4 +372,3 @@ export default function AdminMessages() {
     </div>
   );
 }
-

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { apiUrl } from "@/lib/apiUrl";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -11,41 +12,29 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // Check if already logged in by calling /api/admin/auth/me
-    // This will send the httpOnly cookie automatically if present
-    const checkAuth = async () => {
-      try {
-        const res = await fetch("/api/admin/auth/me", {
-          credentials: "include",
-        });
-        if (res.ok) {
-          router.push("/admin");
-        }
-      } catch (err) {
-        // Not logged in, stay on login page
-      }
-    };
-    checkAuth();
-  }, [router]);
-
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const res = await fetch("/api/admin/auth/login", {
+      const res = await fetch(apiUrl("/api/admin/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
         credentials: "include",
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await res.json()
+        : { error: await res.text().catch(() => "") };
 
       if (!res.ok) {
-        throw new Error(data.error || "Login failed");
+        const msg =
+          (typeof data?.error === "string" && data.error.trim()) ||
+          `Login failed (${res.status})`;
+        throw new Error(msg);
       }
 
       // No need to manually store token - httpOnly cookie is set automatically

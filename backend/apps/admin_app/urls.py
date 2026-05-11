@@ -1,25 +1,40 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
+
 from . import views
 
-router = DefaultRouter()
-router.register(r'categories', views.CategoryViewSet)
-router.register(r'sermons', views.SermonViewSet)
-router.register(r'messages', views.MessageViewSet)
-router.register(r'events', views.EventViewSet)
-router.register(r'pastors', views.PastorViewSet)
-router.register(r'ministries', views.MinistryViewSet)
-router.register(r'gallery', views.GalleryItemViewSet)
-router.register(r'settings', views.SiteSettingsViewSet)
+router = DefaultRouter(trailing_slash='/?')
+router.register(r'categories', views.CategoryViewSet, basename='categories')
+router.register(r'sermons', views.SermonViewSet, basename='sermons')
+router.register(r'messages', views.MessageViewSet, basename='messages')
+router.register(r'events', views.EventViewSet, basename='events')
+router.register(r'pastors', views.PastorViewSet, basename='pastors')
+router.register(r'ministries', views.MinistryViewSet, basename='ministries')
+router.register(r'gallery', views.GalleryItemViewSet, basename='gallery')
 
 urlpatterns = [
-    path('auth/login', views.login_view, name='login'),
-    path('auth/logout', views.logout_view, name='logout'),
-    path('auth/me', views.me_view, name='me'),
-    path('auth/setup-admin', views.setup_admin_view, name='setup_admin'),
-    path('upload/pastor-photo', views.upload_pastor_photo, name='upload_pastor_photo'),
-    path('upload/sermon-thumb', views.upload_sermon_thumb, name='upload_sermon_thumb'),
-    path('upload/event-poster', views.upload_event_poster, name='upload_event_poster'),
-    path('upload/gallery', views.upload_gallery, name='upload_gallery'),
+    # Admin auth (session cookies)
+    path('auth/login', views.login_view),
+    path('auth/login/', views.login_view),
+    path('auth/logout', views.logout_view),
+    path('auth/logout/', views.logout_view),
+    path('auth/me', views.me_view),
+    path('auth/me/', views.me_view),
+
+    # Admin uploads
+    path('upload/pastor-photo', views.upload_pastor_photo),
+    path('upload/pastor-photo/', views.upload_pastor_photo),
+    path('upload/sermon-thumb', views.upload_sermon_thumb),
+    path('upload/sermon-thumb/', views.upload_sermon_thumb),
+    path('upload/event-poster', views.upload_event_poster),
+    path('upload/event-poster/', views.upload_event_poster),
+    path('upload/gallery', views.upload_gallery),
+    path('upload/gallery/', views.upload_gallery),
+
+    # Admin site settings (matches frontend)
+    path('site-settings', views.admin_site_settings_view),
+    path('site-settings/', views.admin_site_settings_view),
+
+    # CRUD endpoints (router)
     path('', include(router.urls)),
 ]

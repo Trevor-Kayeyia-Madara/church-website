@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { apiUrl } from "@/lib/apiUrl";
 
 function splitLines(value) {
   return String(value || "")
@@ -25,7 +26,10 @@ export default function AdminSettings() {
     setError("");
     setMessage("");
     try {
-       const res = await fetch("/api/admin/site-settings", { cache: "no-store", credentials: "include" });
+      const res = await fetch(apiUrl("/api/admin/site-settings"), {
+        cache: "no-store",
+        credentials: "include",
+      });
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error(json.error || "Failed to load");
       setSettings(json.settings);
@@ -47,7 +51,7 @@ export default function AdminSettings() {
     setError("");
     setMessage("");
     try {
-       const res = await fetch("/api/admin/site-settings", {
+      const res = await fetch(apiUrl("/api/admin/site-settings"), {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(settings),
@@ -895,4 +899,3 @@ export default function AdminSettings() {
     </div>
   );
 }
-

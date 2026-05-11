@@ -7,7 +7,7 @@ export const metadata = {
   description: "Discover what makes our church family special and how you can grow in your faith journey with us.",
 };
 
-export default async function AboutPage() {
+export default function AboutPage() {
   return (
     <div className="min-h-screen">
       <section className="relative overflow-hidden py-20 sm:py-28">

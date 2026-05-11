@@ -6,7 +6,10 @@ export function usePathname() {
 }
 
 export function useSearchParams() {
-  return useRRSearchParams();
+  // Next.js returns a read-only URLSearchParams object.
+  // react-router returns [URLSearchParams, setSearchParams].
+  const [params] = useRRSearchParams();
+  return params;
 }
 
 export function redirect(to) {
@@ -25,6 +28,6 @@ export function useRouter() {
   return {
     push: (to) => navigate(to),
     replace: (to) => navigate(to, { replace: true }),
+    refresh: () => {},
   };
 }
-

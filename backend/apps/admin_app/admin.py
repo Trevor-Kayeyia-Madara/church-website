@@ -10,8 +10,8 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Sermon)
 class SermonAdmin(admin.ModelAdmin):
-    list_display = ['title', 'speaker', 'date', 'category', 'is_published']
-    list_filter = ['category', 'is_published', 'date']
+    list_display = ['title', 'speaker', 'date', 'category']
+    list_filter = ['category', 'date']
     search_fields = ['title', 'speaker', 'description']
     prepopulated_fields = {'slug': ('title',)}
     date_hierarchy = 'date'

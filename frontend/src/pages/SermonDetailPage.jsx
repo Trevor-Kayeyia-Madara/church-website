@@ -3,12 +3,15 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { formatDate, formatDuration } from "@/lib/format";
 import { toYouTubeEmbedUrl } from "@/lib/youtube";
+import { apiUrl } from "@/lib/apiUrl";
+import { simpleSermonTitle } from "@/lib/text";
 
 async function fetchSermon(id) {
-  const res = await fetch(`/api/sermons/${encodeURIComponent(id)}`, { cache: "no-store" });
+  const res = await fetch(apiUrl(`/api/sermons/${encodeURIComponent(id)}`), { cache: "no-store" });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error("Failed to load sermon");
-  return res.json();
+  const json = await res.json();
+  return json?.item || json;
 }
 
 export default function SermonDetailPage() {
@@ -42,6 +45,7 @@ export default function SermonDetailPage() {
   }
 
   const sermon = data;
+  const title = simpleSermonTitle(sermon.title);
   const embed = toYouTubeEmbedUrl(sermon.videoUrl);
   const duration = formatDuration(sermon.durationMinutes);
 
@@ -70,7 +74,7 @@ export default function SermonDetailPage() {
         <div className="aspect-video bg-background/40">
           {embed ? (
             <iframe
-              title={sermon.title}
+              title={title}
               className="h-full w-full"
               src={embed}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -87,7 +91,7 @@ export default function SermonDetailPage() {
           <p className="text-accent/90 text-xs font-black tracking-[0.25em] uppercase">
             {sermon.category?.name || "Sermon"}
           </p>
-          <h1 className="mt-3 text-3xl sm:text-4xl font-black leading-tight">{sermon.title}</h1>
+          <h1 className="mt-3 text-3xl sm:text-4xl font-black leading-tight">{title}</h1>
           <p className="mt-3 text-white/70 font-bold">
             {formatDate(sermon.date)}
             {duration ? ` | ${duration}` : ""}
@@ -101,4 +105,3 @@ export default function SermonDetailPage() {
     </div>
   );
 }
-

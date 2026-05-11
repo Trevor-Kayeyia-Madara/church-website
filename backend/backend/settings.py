@@ -141,7 +141,11 @@ MEDIA_ROOT = BASE_DIR / 'public' / 'uploads'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS
-cors_origins = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').strip()
+# Default dev origins include Vite (5173) and typical fallback ports.
+cors_origins = os.getenv(
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000',
+).strip()
 if cors_origins == '*' or cors_origins.lower() == 'all':
     CORS_ALLOW_ALL_ORIGINS = True
     CORS_ALLOWED_ORIGINS = []
@@ -182,11 +186,14 @@ CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'https://www.dcutawala.
 
 # REST Framework
 REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
+        'apps.admin_app.authentication.CsrfExemptSessionAuthentication',
     ],
 }
 
@@ -195,3 +202,17 @@ YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
 YOUTUBE_PLAYLIST_ID = os.getenv('YOUTUBE_PLAYLIST_ID')
 YOUTUBE_CHANNEL_ID = os.getenv('YOUTUBE_CHANNEL_ID')
 YOUTUBE_MAX_RESULTS = int(os.getenv('YOUTUBE_MAX_RESULTS', 50))
+
+# Email (for contact form notifications)
+# Set these env vars in production (cPanel etc). In dev, defaults to console backend.
+EMAIL_HOST = os.getenv('EMAIL_HOST', '').strip()
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '').strip()
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '').strip()
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'no-reply@dcutawala.org')
+
+if EMAIL_HOST:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

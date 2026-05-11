@@ -11,8 +11,8 @@ cd backend
 python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
-set FLASK_APP=app.app:app
-flask run --port 8000
+python manage.py migrate
+python manage.py runserver 8000
 ```
 
 2) Start frontend:
@@ -24,3 +24,9 @@ npm run dev
 ```
 
 The Vite dev server proxies `/api/*` to `http://127.0.0.1:8000`.
+
+## Production API base URL
+
+When deploying the frontend and backend on different origins (e.g. frontend on `https://dcutawala.org` and backend on `https://api.dcutawala.org`), set:
+
+- `VITE_API_BASE_URL=https://api.dcutawala.org`

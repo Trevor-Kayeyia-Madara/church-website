@@ -71,12 +71,20 @@ export default function ContactPage() {
                   </div>
                   <div className="rounded-2xl bg-background/60 border border-white/10 p-4">
                     <p className="text-white/60 font-bold">Email</p>
-                    <a
-                      href={`mailto:${site.contact.email}`}
-                      className="mt-1 inline-block font-extrabold hover:text-accent"
-                    >
-                      {site.contact.email}
-                    </a>
+                    <div className="mt-1 flex flex-col gap-1">
+                      <a
+                        href="mailto:info@dcutawala.org"
+                        className="inline-block font-extrabold hover:text-accent"
+                      >
+                        info@dcutawala.org
+                      </a>
+                      <a
+                        href="mailto:dcutawala@gmail.com"
+                        className="inline-block font-extrabold hover:text-accent"
+                      >
+                        dcutawala@gmail.com
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -86,7 +94,7 @@ export default function ContactPage() {
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 src={`https://www.google.com/maps?q=${encodeURIComponent(
-                  `${site.contact.addressLine2}, ${site.contact.addressLine1}`,
+                  "Deliverance Church Utawala",
                 )}&output=embed`}
               />
             </div>

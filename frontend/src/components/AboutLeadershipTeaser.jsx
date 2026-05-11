@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { apiUrl } from "@/lib/apiUrl";
 import SectionWrapper from "@/components/SectionWrapper";
 
 async function fetchPastors(limit) {
-  const res = await fetch(`/api/pastors?limit=${encodeURIComponent(String(limit))}`, {
+  const res = await fetch(apiUrl(`/api/pastors?limit=${encodeURIComponent(String(limit))}`), {
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to load pastors");
@@ -41,4 +42,3 @@ export default function AboutLeadershipTeaser() {
     </SectionWrapper>
   );
 }
-

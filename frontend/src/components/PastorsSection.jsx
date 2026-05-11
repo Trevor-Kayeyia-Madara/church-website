@@ -1,9 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { apiUrl, backendAssetUrl } from "@/lib/apiUrl";
 
 async function fetchPastors(limit) {
-  const res = await fetch(`/api/pastors?limit=${encodeURIComponent(String(limit))}`, {
+  const res = await fetch(apiUrl(`/api/pastors?limit=${encodeURIComponent(String(limit))}`), {
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to load pastors");
@@ -48,7 +49,7 @@ export default function PastorsSection() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   alt={p.name}
-                  src={p.photoUrl}
+                  src={backendAssetUrl(p.photoUrl)}
                   className="h-full w-full object-cover"
                   loading="lazy"
                 />

@@ -10,7 +10,7 @@ export const SITE = {
     addressLine2: "Utawala Road",
     phoneDisplay: "+254 700 000 000",
     phoneTel: "+254700000000",
-    email: "info@deliveranceutawala.org",
+    email: "info@dcutawala.org",
   },
   social: {
     youtube: "https://www.youtube.com",

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { apiUrl } from "@/lib/apiUrl";
 
 export default function ContactForm() {
   const [status, setStatus] = useState("idle");
+  const [error, setError] = useState("");
   const searchParams = useSearchParams();
   const defaultSubject = searchParams.get("subject") || "";
   const [form, setForm] = useState({
@@ -22,17 +24,20 @@ export default function ContactForm() {
   async function submit(e) {
     e.preventDefault();
     setStatus("loading");
+    setError("");
     try {
-      const res = await fetch("/api/contact", {
+      const res = await fetch(apiUrl("/api/contact"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error("Failed");
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.ok) throw new Error(json.error || "Failed to send message");
       setStatus("success");
       setForm({ name: "", email: "", phone: "", subject: "", message: "" });
-    } catch {
+    } catch (e2) {
       setStatus("error");
+      setError(e2?.message || "Something went wrong");
     }
   }
 
@@ -111,7 +116,7 @@ export default function ContactForm() {
         <p className="text-sm text-accent font-bold">Message sent. Thank you!</p>
       ) : status === "error" ? (
         <p className="text-sm text-red-300 font-bold">
-          Something went wrong. Please try again.
+          {error || "Something went wrong. Please try again."}
         </p>
       ) : null}
     </form>

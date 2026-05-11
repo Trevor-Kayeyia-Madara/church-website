@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { apiUrl } from "@/lib/apiUrl";
+import { simpleSermonTitle } from "@/lib/text";
 
 function toDatetimeLocal(value) {
   const d = value instanceof Date ? value : new Date(value);
@@ -42,7 +44,7 @@ export default function AdminSermons() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/sermons", { 
+      const res = await fetch(apiUrl("/api/admin/sermons"), { 
         cache: "no-store",
         credentials: "include", // Send cookies (admin_token)
       });
@@ -68,7 +70,7 @@ export default function AdminSermons() {
     try {
       const body = new FormData();
       body.set("file", file);
-      const res = await fetch("/api/admin/upload/sermon-thumb", {
+      const res = await fetch(apiUrl("/api/admin/upload/sermon-thumb"), {
         method: "POST",
         body,
         credentials: "include",
@@ -87,11 +89,11 @@ export default function AdminSermons() {
     setError("");
     try {
       const duration = Number.parseInt(String(form.durationMinutes || ""), 10);
-      const res = await fetch("/api/admin/sermons", {
+      const res = await fetch(apiUrl("/api/admin/sermons"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          title: form.title,
+          title: simpleSermonTitle(form.title),
           speaker: form.speaker,
           date: new Date(form.date).toISOString(),
           durationMinutes: Number.isFinite(duration) ? duration : undefined,
@@ -132,11 +134,11 @@ export default function AdminSermons() {
     setError("");
     try {
       const duration = Number.parseInt(String(editing.durationMinutes ?? ""), 10);
-      const res = await fetch(`/api/admin/sermons/${editing.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/sermons/${editing.id}`), {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          title: editing.title,
+          title: simpleSermonTitle(editing.title),
           speaker: editing.speaker || "",
           date: new Date(editing.date).toISOString(),
           durationMinutes: Number.isFinite(duration) ? duration : undefined,
@@ -163,7 +165,7 @@ export default function AdminSermons() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/sermons/${id}`, { 
+      const res = await fetch(apiUrl(`/api/admin/sermons/${id}`), { 
         method: "DELETE",
         credentials: "include",
       });
@@ -642,4 +644,3 @@ export default function AdminSermons() {
     </div>
   );
 }
-

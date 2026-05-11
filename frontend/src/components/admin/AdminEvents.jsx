@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { apiUrl } from "@/lib/apiUrl";
 
 function toDatetimeLocal(value) {
   const d = value instanceof Date ? value : new Date(value);
@@ -41,7 +42,7 @@ export default function AdminEvents() {
     try {
       const body = new FormData();
       body.set("file", file);
-      const res = await fetch("/api/admin/upload/event-poster", {
+      const res = await fetch(apiUrl("/api/admin/upload/event-poster"), {
         method: "POST",
         body,
         credentials: "include",
@@ -58,7 +59,7 @@ export default function AdminEvents() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/events", { 
+      const res = await fetch(apiUrl("/api/admin/events"), { 
         cache: "no-store",
         credentials: "include",
       });
@@ -81,7 +82,7 @@ export default function AdminEvents() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch("/api/admin/events", {
+      const res = await fetch(apiUrl("/api/admin/events"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -115,7 +116,7 @@ export default function AdminEvents() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/events/${editing.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/events/${editing.id}`), {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -143,7 +144,7 @@ export default function AdminEvents() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/events/${id}`, { 
+      const res = await fetch(apiUrl(`/api/admin/events/${id}`), { 
         method: "DELETE",
         credentials: "include",
       });

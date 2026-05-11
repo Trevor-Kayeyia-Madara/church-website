@@ -36,6 +36,11 @@ export default defineConfig({
         target: "http://127.0.0.1:8000",
         changeOrigin: true,
       },
+      // Backend-served media uploads (Django MEDIA_URL=/uploads/)
+      "/uploads": {
+        target: "http://127.0.0.1:8000",
+        changeOrigin: true,
+      },
     },
     fs: { allow: [frontendRoot] },
   },

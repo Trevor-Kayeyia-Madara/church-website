@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Mail, MapPin, Phone, Youtube, Facebook, Instagram, Music2, Link2 } from "lucide-react";
 import { useSite } from "@/lib/siteContext";
 import AppLink from "@/components/AppLink";
+import { backendAssetUrl } from "@/lib/apiUrl";
 
 const socialItems = [
   { key: "youtube", label: "YouTube", Icon: Youtube },
@@ -16,7 +17,7 @@ const socialItems = [
 export default function Footer() {
   const site = useSite();
   const siteName = site?.name || "Deliverance Church Utawala";
-  const logoUrl = site?.logoUrl || "/logo.png";
+  const logoUrl = backendAssetUrl(site?.logoUrl) || "/logo.png";
 
   return (
     <footer className="border-t border-white/10 bg-background">

@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useSite } from "@/lib/siteContext";
 import AppLink from "@/components/AppLink";
+import { backendAssetUrl } from "@/lib/apiUrl";
 
 const links = [
   { href: "/", label: "Home" },
@@ -26,7 +27,7 @@ export default function Navbar() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const site = useSite();
   const siteName = site?.name || "Deliverance Church Utawala";
-  const logoUrl = site?.logoUrl || "/logo.png";
+  const logoUrl = backendAssetUrl(site?.logoUrl) || "/logo.png";
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-background/85 backdrop-blur">

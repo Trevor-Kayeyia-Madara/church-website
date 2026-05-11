@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { apiUrl } from "@/lib/apiUrl";
 
 export default function AdminYouTubeSync() {
   const [status, setStatus] = useState("idle");
@@ -10,7 +11,10 @@ export default function AdminYouTubeSync() {
     setStatus("loading");
     setResult(null);
     try {
-      const res = await fetch("/api/sermons/sync-youtube", { method: "POST" });
+      const res = await fetch(apiUrl("/api/sermons/sync-youtube"), {
+        method: "POST",
+        credentials: "include",
+      });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || !json.ok) {
         throw new Error(json.error || "Sync failed");
@@ -49,7 +53,7 @@ export default function AdminYouTubeSync() {
         </button>
         <a
           className="inline-flex items-center justify-center rounded-xl bg-white/5 border border-white/10 px-7 py-3.5 font-bold hover:bg-white/10 transition-colors"
-          href="/api/sermons?limit=3"
+          href={apiUrl("/api/sermons?limit=3")}
           target="_blank"
           rel="noreferrer"
         >
@@ -67,4 +71,3 @@ export default function AdminYouTubeSync() {
     </div>
   );
 }
-

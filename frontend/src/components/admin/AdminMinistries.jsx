@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { apiUrl } from "@/lib/apiUrl";
 
 function parseHighlights(raw) {
   return String(raw || "")
@@ -36,7 +37,7 @@ export default function AdminMinistries() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/admin/ministries", { 
+      const res = await fetch(apiUrl("/api/admin/ministries"), { 
         cache: "no-store",
         credentials: "include",
       });
@@ -59,7 +60,7 @@ export default function AdminMinistries() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch("/api/admin/ministries", {
+      const res = await fetch(apiUrl("/api/admin/ministries"), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -97,7 +98,7 @@ export default function AdminMinistries() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/ministries/${editing.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/ministries/${editing.id}`), {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -125,7 +126,7 @@ export default function AdminMinistries() {
     setMessage("");
     setError("");
     try {
-      const res = await fetch(`/api/admin/ministries/${id}`, { 
+      const res = await fetch(apiUrl(`/api/admin/ministries/${id}`), { 
         method: "DELETE",
         credentials: "include",
       });
@@ -459,4 +460,3 @@ export default function AdminMinistries() {
     </div>
   );
 }
-
