@@ -1126,6 +1126,38 @@
           }
         }
       ]
+    },
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "Contact Form (Send Email)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"phone\": \"0712345678\",\n  \"subject\": \"Email test\",\n  \"message\": \"Hello from /api/contact\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/contact/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "contact",
+                ""
+              ]
+            }
+          }
+        }
+      ]
     }
   ]
 }

@@ -206,11 +206,17 @@ YOUTUBE_MAX_RESULTS = int(os.getenv('YOUTUBE_MAX_RESULTS', 50))
 # Email (for contact form notifications)
 # Set these env vars in production (cPanel etc). In dev, defaults to console backend.
 EMAIL_HOST = os.getenv('EMAIL_HOST', '').strip()
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '').strip()
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '').strip()
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '465' if EMAIL_USE_SSL else '587'))
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '10'))
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'no-reply@dcutawala.org')
+
+if EMAIL_USE_SSL:
+    # Django does not allow TLS+SSL simultaneously; SSL typically uses port 465.
+    EMAIL_USE_TLS = False
 
 if EMAIL_HOST:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
