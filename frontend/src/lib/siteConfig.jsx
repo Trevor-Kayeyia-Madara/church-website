@@ -2,14 +2,14 @@ export const SITE = {
   name: "Deliverance Church Utawala",
   shortName: "DC Utawala",
   tagline: "The Church of Choice",
-  location: "Utawala, Nairobi, Kenya",
+  location: "300M Past ACK. ST. MONICA,UTAWALA",
   logoUrl: "/logo.png",
   liveEmbedUrl: null,
   contact: {
     addressLine1: "Utawala, Nairobi, Kenya",
     addressLine2: "Utawala Road",
-    phoneDisplay: "+254 700 000 000",
-    phoneTel: "+254700000000",
+    phoneDisplay: "+254723102273",
+    phoneTel: "+254723102273",
     email: "info@dcutawala.org",
   },
   social: {

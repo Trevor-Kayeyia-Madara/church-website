@@ -11,6 +11,7 @@ export const metadata = {
 
 export default function ContactPage() {
   const site = useSite();
+  const googleMapsUrl = "https://maps.app.goo.gl/zYKi7pvCj3Fm9suJ9";
   return (
     <div>
       <div className="relative overflow-hidden">
@@ -86,6 +87,17 @@ export default function ContactPage() {
                       </a>
                     </div>
                   </div>
+                </div>
+
+                <div className="mt-5">
+                  <a
+                    href={googleMapsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center rounded-xl bg-white/5 border border-white/10 px-6 py-3 font-bold hover:bg-white/10 transition-colors"
+                  >
+                    Open in Google Maps
+                  </a>
                 </div>
               </div>
               <iframe
